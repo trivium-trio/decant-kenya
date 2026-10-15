@@ -1,4 +1,4 @@
-/** Amounts are in minor units (for example cents). Currency is an ISO 4217 code; "XXX" means not decided yet. */
+/** Amounts are in minor units (for example cents). Currency is an ISO 4217 code (for example "KES"). */
 export interface Money {
   amount: number;
   currency: string;

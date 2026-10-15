@@ -72,7 +72,7 @@ export function createMockApi(): ShopApi {
           priced.push({ ...line, name: set.name, unitPrice: set.price, available: true });
         }
       }
-      const currency = priced[0]?.unitPrice.currency ?? "XXX";
+      const currency = priced[0]?.unitPrice.currency ?? "KES";
       const subtotal: Money = {
         amount: priced.filter((l) => l.available).reduce((sum, l) => sum + l.unitPrice.amount * l.quantity, 0),
         currency,

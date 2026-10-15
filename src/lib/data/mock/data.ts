@@ -1,7 +1,7 @@
 import type { DiscoverySet, Media, Product, Review } from "../types";
 
 const image = (alt: string): Media => ({ src: "/placeholder-vial.svg", alt, width: 800, height: 1000 });
-const price = { amount: 1500, currency: "XXX" }; // "XXX" = currency not decided yet
+const price = { amount: 150000, currency: "KES" };
 
 export const products: Product[] = Array.from({ length: 8 }, (_, i): Product => {
   const n = i + 1;
@@ -25,7 +25,7 @@ export const sets: DiscoverySet[] = [1, 2, 3].map((n): DiscoverySet => ({
   name: `[Set name ${n}]`,
   description: "[3 decants · what the set is for]",
   productIds: [`p${n}`, `p${n + 1}`, `p${n + 2}`],
-  price: { amount: 4000, currency: "XXX" },
+  price: { amount: 400000, currency: "KES" },
   image: image(`[Set ${n}]`),
 }));
 

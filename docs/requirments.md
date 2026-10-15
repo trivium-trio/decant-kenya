@@ -34,6 +34,7 @@ Useful patterns found in the competitors: discovery sets (Thapelo Smells), a fra
 - **Design direction:** minimal, dark, no white backgrounds. Wireframe and palette boards exist on the design canvas.
 - **Components:** shadcn/ui.
 - **Interface:** no carousels anywhere on the site, at the client's request.
+- **Market:** Kenya. Prices are in Kenyan shillings (KES).
 
 ## 4. Users and key journeys
 
@@ -109,6 +110,8 @@ The exact steps depend on the backend and payment provider, but the frontend mus
 - **FR-30 · Must** Order confirmation page with order number and summary.
 - **FR-31 · Should** Order status or tracking page. To confirm.
 - **FR-32 · Could** Customer accounts and order history. To confirm.
+- **FR-37 · Must** M-Pesa as a payment option, using STK Push: the customer enters their phone number and approves on their phone. Checkout shows a clear waiting state, a success state and a retry path on failure. Card payments are offered as a second option. Provider to confirm.
+- **FR-38 · Must** Delivery form suited to Kenya: name, phone number (+254 format validated), county or town, estate, building or landmark, and optional delivery notes. To confirm with the client.
 
 ### 5.8 Content and support pages
 
@@ -172,7 +175,7 @@ The exact steps depend on the backend and payment provider, but the frontend mus
 
 - **NFR-23** HTTPS only. No secrets in client code. Strict content security policy.
 - **NFR-24** Card data never touches our frontend. Use the provider's hosted components.
-- **NFR-25** Cookie and analytics consent handled as required for the client's market. To confirm.
+- **NFR-25** Cookie and analytics consent follows Kenya's Data Protection Act, 2019: consent before any non-essential cookies, easy withdrawal, and a privacy policy that matches FR-36. The client confirms ODPC registration and any safeguards needed for hosting or analytics outside Kenya. To confirm.
 
 ### 7.7 Reliability and resilience
 
@@ -259,8 +262,8 @@ Because every decant is 10ml, each perfume has one sellable variant, which keeps
 **Open questions (To confirm)**
 
 - Backend and commerce approach: custom build or an existing platform. Next meeting.
-- Target market, currency and languages, which drive payment providers, delivery options, tax display and consent rules.
-- Payment provider and delivery methods.
+- Languages (English only, or also Swahili?), tax display, and which delivery options and fees apply.
+- Payment provider: M-Pesa through Daraja directly or through an aggregator (for example Pesapal, Paystack or Flutterwave), plus cards. Delivery methods.
 - Guest checkout only, or accounts as well?
 - Who manages products, sets, prices and reviews, and where do reviews come from?
 - Product photography: who supplies vial photos, and do we have transparent cutouts of brand bottles?

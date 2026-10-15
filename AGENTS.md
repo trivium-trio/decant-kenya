@@ -34,3 +34,13 @@ Next.js App Router (latest stable), TypeScript strict, Tailwind CSS v4, shadcn/u
 - Work in small milestones. When a milestone is done: run `npm run lint`, `npx tsc --noEmit` and `npm run build`, fix everything, commit (conventional commits), report, and STOP. Do not start the next milestone.
 - Do not rewrite or reformat files you were not asked to touch. Keep TODO comments that reference requirement IDs.
 - No `any`. No secrets in code. No new dependency without saying why.
+
+## Next.js 16 notes
+- Cache Components is enabled. Runtime data (params without generateStaticParams, searchParams, cookies, headers) and uncached data fetching must sit inside a <Suspense> boundary or a function marked "use cache". If the build reports uncached data outside Suspense, fix it that way instead of turning the feature off.
+- When a real backend adapter is added, cache catalogue reads with "use cache" (cacheLife, cacheTag) so the landing page and listings stay static.
+- Keep agentRules: false in next.config.ts so next dev does not edit this file.
+
+## Market: Kenya
+- Prices are in KES. Format them with Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", minimumFractionDigits: 0 }). Never hardcode a currency symbol.
+- The main payment method will be M-Pesa (STK Push), plus cards. The provider is not chosen yet, so keep everything payment-related behind the ShopApi interface.
+- Phone numbers are Kenyan (+254). Many visitors will be on mid-range phones and variable mobile networks, so keep pages light.
