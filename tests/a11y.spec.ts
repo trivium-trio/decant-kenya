@@ -6,6 +6,10 @@ const pagesToTest = [
   { path: "/sets", name: "Discovery sets listing" },
   { path: "/sets/sample-set-1", name: "Discovery set detail" },
   { path: "/cart", name: "Cart page" },
+  { path: "/shop", name: "Shop listing page 1" },
+  { path: "/shop?page=2", name: "Shop listing page 2" },
+  { path: "/product/sample-perfume-1", name: "Product detail (in stock)" },
+  { path: "/product/sample-perfume-7", name: "Product detail (sold out)" },
 ];
 
 for (const { path, name } of pagesToTest) {

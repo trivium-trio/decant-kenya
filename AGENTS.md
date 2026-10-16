@@ -45,3 +45,7 @@ Next.js App Router (latest stable), TypeScript strict, Tailwind CSS v4, shadcn/u
 - Prices are in KES. Format them with Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", minimumFractionDigits: 0 }). Never hardcode a currency symbol.
 - The main payment method will be M-Pesa (STK Push), plus cards. The provider is not chosen yet, so keep everything payment-related behind the ShopApi interface.
 - Phone numbers are Kenyan (+254). Many visitors will be on mid-range phones and variable mobile networks, so keep pages light.
+
+## Git workflow
+- One branch per milestone, named feat/<short-name> with hyphens. Never commit to main. Commit only when lint, tsc, build and tests are green. Do not push and do not merge; the owner does that after review.
+

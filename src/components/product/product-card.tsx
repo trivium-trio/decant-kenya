@@ -8,7 +8,18 @@ export function ProductCard({ product }: { product: Product }) {
     <article className="flex h-full flex-col justify-between gap-3 rounded-lg bg-card p-3 md:p-4">
       <Link href={`/product/${product.slug}`} className="flex flex-col gap-2">
         {/* TODO: next/image once real vial photos exist */}
-        <div className="aspect-square rounded-md bg-background/40" aria-hidden />
+        <div className="relative aspect-square rounded-md bg-background/40">
+          {product.stock === "out_of_stock" && (
+            <span className="absolute left-2 top-2 rounded border border-border bg-card/90 px-2 py-0.5 text-xs font-medium text-destructive">
+              Sold out
+            </span>
+          )}
+          {product.stock === "low_stock" && (
+            <span className="absolute left-2 top-2 rounded border border-border bg-card/90 px-2 py-0.5 text-xs font-medium text-foreground">
+              Few left
+            </span>
+          )}
+        </div>
         <p className="text-xs text-muted-foreground">{product.brand}</p>
         <h3 className="line-clamp-2 text-base font-medium">{product.name}</h3>
       </Link>
