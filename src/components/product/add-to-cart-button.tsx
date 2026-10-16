@@ -4,27 +4,41 @@ import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart/store";
 import { track } from "@/lib/analytics/track";
 import { toast } from "sonner";
-import type { Product } from "@/lib/data/types";
+import type { CartItemKind } from "@/lib/data/types";
 
-export function AddToCartButton({ product }: { product: Product }) {
+export interface AddToCartButtonProps {
+  kind: CartItemKind;
+  itemId: string;
+  name: string;
+  unavailable?: boolean;
+}
+
+export function AddToCartButton({ kind, itemId, name, unavailable = false }: AddToCartButtonProps) {
   const add = useCart((s) => s.add);
-  const isOutOfStock = product.stock === "out_of_stock";
 
   const handleAddToCart = () => {
-    if (isOutOfStock) return;
-    add({ kind: "product", itemId: product.id, quantity: 1 });
-    track({ name: "add_to_cart", kind: "product", itemId: product.id });
+    if (unavailable) return;
+    add({ kind, itemId, quantity: 1 });
+    track({ name: "add_to_cart", kind, itemId });
     toast("Added to cart");
   };
+
+  const unavailableLabel = kind === "set" ? "Currently unavailable" : "Sold out";
 
   return (
     <Button
       type="button"
       onClick={handleAddToCart}
-      disabled={isOutOfStock}
-      className="mt-auto min-h-11 w-full bg-primary font-medium text-primary-foreground hover:bg-primary/90"
+      disabled={unavailable}
+      className="mt-auto min-h-11 w-full bg-primary font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
     >
-      {isOutOfStock ? "Sold out" : "Add to cart"}
+      {unavailable ? (
+        unavailableLabel
+      ) : (
+        <>
+          Add to cart <span className="sr-only">({name})</span>
+        </>
+      )}
     </Button>
   );
 }

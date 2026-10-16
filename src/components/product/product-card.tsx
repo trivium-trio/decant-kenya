@@ -15,7 +15,12 @@ export function ProductCard({ product }: { product: Product }) {
       <div className="flex flex-col gap-2">
         <p className="text-xs uppercase tracking-wider text-muted-foreground">10ml decant</p>
         <Price money={product.price} className="font-medium" />
-        <AddToCartButton product={product} />
+        <AddToCartButton
+          kind="product"
+          itemId={product.id}
+          name={product.name}
+          unavailable={product.stock === "out_of_stock"}
+        />
       </div>
     </article>
   );

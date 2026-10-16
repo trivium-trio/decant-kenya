@@ -24,7 +24,7 @@ export const sets: DiscoverySet[] = [1, 2, 3].map((n): DiscoverySet => ({
   slug: `sample-set-${n}`,
   name: `[Set name ${n}]`,
   description: "[3 decants · what the set is for]",
-  productIds: [`p${n}`, `p${n + 1}`, `p${n + 2}`],
+  productIds: n === 3 ? ["p5", "p6", "p7"] : [`p${n}`, `p${n + 1}`, `p${n + 2}`],
   price: { amount: 400000, currency: "KES" },
   image: image(`[Set ${n}]`),
 }));

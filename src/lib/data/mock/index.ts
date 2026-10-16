@@ -69,7 +69,13 @@ export function createMockApi(): ShopApi {
             issues.push(`Set ${line.itemId} no longer exists.`);
             continue;
           }
-          priced.push({ ...line, name: set.name, unitPrice: set.price, available: true });
+          const hasSoldOut = set.productIds.some((pid) => {
+            const p = products.find((prod) => prod.id === pid);
+            return p?.stock === "out_of_stock";
+          });
+          const available = !hasSoldOut;
+          if (!available) issues.push(`${set.name} includes a sold-out item.`);
+          priced.push({ ...line, name: set.name, unitPrice: set.price, available });
         }
       }
       const currency = priced[0]?.unitPrice.currency ?? "KES";

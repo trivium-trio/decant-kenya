@@ -12,6 +12,7 @@ Next.js App Router (latest stable), TypeScript strict, Tailwind CSS v4, shadcn/u
 - Frontend only. The backend is undecided and is NOT part of this repo.
 - UI code gets data only through `ShopApi` in `src/lib/data/api.ts` (`getShopApi()`). Today that is the mock adapter in `src/lib/data/mock/`. Never call fetch to a backend from a component, and never import mock data directly in UI code.
 - Server components by default. Add "use client" only for interactivity (menu, cart, forms) and keep client components small.
+- Client components never import getShopApi. Data for client components arrives as props from server components, or through a Server Action that calls getShopApi().
 - Money is in minor units; currency is "XXX" until the market is confirmed.
 
 ## Mobile first (hard rule)
