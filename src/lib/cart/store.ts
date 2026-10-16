@@ -69,7 +69,23 @@ export const useCart = create<CartState>()(
       storage: createJSONStorage(() => {
         try {
           if (typeof window !== "undefined" && window.localStorage) {
-            return window.localStorage;
+            return {
+              getItem: (key: string) => {
+                try {
+                  const val = window.localStorage.getItem(key);
+                  if (!val || val.trim() === "") return null;
+                  return val;
+                } catch {
+                  return null;
+                }
+              },
+              setItem: (key: string, value: string) => {
+                window.localStorage.setItem(key, value);
+              },
+              removeItem: (key: string) => {
+                window.localStorage.removeItem(key);
+              },
+            };
           }
         } catch {
           // localStorage disabled or blocked

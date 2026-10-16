@@ -80,8 +80,8 @@ export type SortOption = "popular" | "price_asc" | "price_desc" | "name";
 
 export interface ProductQuery {
   search?: string;
-  brand?: string;
-  family?: string;
+  brands?: string[];
+  families?: string[];
   inStockOnly?: boolean;
   sort?: SortOption;
   page?: number;

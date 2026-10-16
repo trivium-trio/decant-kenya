@@ -11,7 +11,7 @@ async function checkNoOverflow(page: Page) {
 }
 
 async function checkTouchTargets(page: Page) {
-  const elements = await page.locator("a, button").all();
+  const elements = await page.locator("a, button, label:has(input[type='checkbox'])").all();
   for (const el of elements) {
     if (await el.isVisible()) {
       const isDevTool = await el.evaluate(
@@ -151,6 +151,29 @@ for (const vp of mobileViewports) {
 
     test("/shop?page=2 has no overflow and meets 44px target rule", async ({ page }) => {
       await page.goto("/shop?page=2");
+      await checkNoOverflow(page);
+      await checkTouchTargets(page);
+    });
+
+    test("/shop?q=Perfume has no overflow and meets 44px target rule", async ({ page }) => {
+      await page.goto("/shop?q=Perfume");
+      await checkNoOverflow(page);
+      await checkTouchTargets(page);
+    });
+
+    test("/shop?brand=%5BBrand+A%5D&inStock=1 has no overflow and meets 44px target rule", async ({ page }) => {
+      await page.goto("/shop?brand=%5BBrand+A%5D&inStock=1");
+      await checkNoOverflow(page);
+      await checkTouchTargets(page);
+    });
+
+    test("open filter sheet has no overflow and meets 44px target rule", async ({ page }) => {
+      await page.goto("/shop");
+      const filterBtn = page.getByRole("button", { name: /^Filters/ });
+      await expect(filterBtn).toBeVisible();
+      await filterBtn.click();
+      const sheet = page.locator("[data-slot='sheet-content']");
+      await expect(sheet).toBeVisible();
       await checkNoOverflow(page);
       await checkTouchTargets(page);
     });

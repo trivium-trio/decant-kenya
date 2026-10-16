@@ -14,6 +14,7 @@ Next.js App Router (latest stable), TypeScript strict, Tailwind CSS v4, shadcn/u
 - Server components by default. Add "use client" only for interactivity (menu, cart, forms) and keep client components small.
 - Client components never import getShopApi. Data for client components arrives as props from server components, or through a Server Action that calls getShopApi().
 - Money is in minor units; currency is "XXX" until the market is confirmed.
+- All shop state lives in the URL (q, sort, page, brand, family, inStock). It is parsed, validated and serialized only in src/lib/shop/url.ts; no other file builds shop URLs by hand.
 
 ## Mobile first (hard rule)
 - Design and build at 360 to 390px first. Unprefixed Tailwind classes are the phone styles; md: (768), lg: (1024), xl: (1280) only add to them.

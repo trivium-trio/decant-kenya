@@ -18,6 +18,12 @@ export function Header() {
           ))}
         </nav>
         <div className="flex items-center gap-2 text-sm">
+          <Link
+            href="/shop#search"
+            className="inline-flex min-h-11 items-center px-2 hover:text-muted-foreground"
+          >
+            Search
+          </Link>
           <CartCount />
           <MobileMenu />
         </div>

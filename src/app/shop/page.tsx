@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { ShopResults, ShopResultsSkeleton } from "@/components/shop/shop-results";
 
+import type { RawSearchParams } from "@/lib/shop/url";
+
 export const metadata: Metadata = {
   title: "Shop",
   description: "Browse our curated collection of 10ml fragrance decants.",
@@ -13,7 +15,7 @@ export const metadata: Metadata = {
 export default function ShopPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; sort?: string }>;
+  searchParams: Promise<RawSearchParams>;
 }) {
   return (
     <main className="mx-auto max-w-6xl px-5 py-10 md:px-8 md:py-14">
