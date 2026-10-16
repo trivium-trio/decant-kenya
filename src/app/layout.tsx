@@ -3,6 +3,7 @@ import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
+import { CartHydrator } from "@/components/layout/cart-hydrator";
 import { Toaster } from "@/components/ui/sonner";
 import { siteConfig } from "@/config/site";
 
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={dmSans.variable}>
       <body className="flex min-h-dvh flex-col bg-background font-sans text-foreground antialiased">
+        <CartHydrator />
         <Header />
         <div className="flex-1">{children}</div>
         <Footer />

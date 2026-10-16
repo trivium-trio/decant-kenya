@@ -10,6 +10,7 @@ export function CartCount() {
     <Link
       href="/cart"
       className="inline-flex min-h-11 items-center px-2 hover:text-muted-foreground"
+      aria-label={`Cart, ${count} items`}
     >
       Cart ({count})
     </Link>
