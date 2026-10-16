@@ -14,17 +14,20 @@ export function createMockApi(): ShopApi {
     async listProducts(query = {}) {
       const { search, brand, family, inStockOnly, sort = "popular", page = 1, pageSize = 12 } = query;
       const q = search?.trim().toLowerCase();
-      const filtered = products
-        .filter(
-          (p) =>
-            (!q || `${p.brand} ${p.name}`.toLowerCase().includes(q)) &&
-            (!brand || p.brand === brand) &&
-            (!family || p.family === family) &&
-            (!inStockOnly || p.stock !== "out_of_stock"),
-        )
-        .sort(sorters[sort]);
-      const start = (page - 1) * pageSize;
-      return { items: filtered.slice(start, start + pageSize), total: filtered.length, page, pageSize };
+      const filtered = products.filter(
+        (p) =>
+          (!q || `${p.brand} ${p.name}`.toLowerCase().includes(q)) &&
+          (!brand || p.brand === brand) &&
+          (!family || p.family === family) &&
+          (!inStockOnly || p.stock !== "out_of_stock"),
+      );
+      const sorter = sorters[sort] ?? sorters.popular;
+      const sorted = sort === "popular" ? [...filtered] : [...filtered].sort(sorter);
+      const safePageSize = pageSize > 0 ? pageSize : 12;
+      const totalPages = Math.max(1, Math.ceil(sorted.length / safePageSize));
+      const safePage = Math.max(1, Math.min(page, totalPages));
+      const start = (safePage - 1) * safePageSize;
+      return { items: sorted.slice(start, start + safePageSize), total: sorted.length, page: safePage, pageSize: safePageSize };
     },
 
     async getProduct(slug) {

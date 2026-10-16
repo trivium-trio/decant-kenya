@@ -40,6 +40,9 @@ for (const vp of mobileViewports) {
   test.describe(`Mobile quality checks (${vp.name})`, () => {
     test.beforeEach(async ({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
+      await page.addInitScript(() => {
+        window.localStorage.clear();
+      });
     });
 
     test("landing page has no horizontal overflow (NFR-9)", async ({ page }) => {
@@ -139,5 +142,44 @@ for (const vp of mobileViewports) {
         expect(btnBox.y + btnBox.height).toBeLessThanOrEqual(vp.height + 1);
       }
     });
+
+    test("/shop has no overflow and meets 44px target rule", async ({ page }) => {
+      await page.goto("/shop");
+      await checkNoOverflow(page);
+      await checkTouchTargets(page);
+    });
+
+    test("/shop?page=2 has no overflow and meets 44px target rule", async ({ page }) => {
+      await page.goto("/shop?page=2");
+      await checkNoOverflow(page);
+      await checkTouchTargets(page);
+    });
+
+    test("/product/sample-perfume-1 has no overflow, meets 44px rule, and footer link is not covered by fixed bar", async ({
+      page,
+    }) => {
+      await page.goto("/product/sample-perfume-1");
+      await checkNoOverflow(page);
+      await checkTouchTargets(page);
+
+      // Scroll to the very bottom
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+
+      // Check that the last footer link is not covered by the fixed bar
+      const lastFooterLink = page.locator("footer nav[aria-label='Footer'] a").last();
+      await expect(lastFooterLink).toBeVisible();
+
+      // document.elementFromPoint at the link's center must return that link
+      const isTopElement = await lastFooterLink.evaluate((el) => {
+        const rect = el.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const topElement = document.elementFromPoint(centerX, centerY);
+        return topElement === el || el.contains(topElement);
+      });
+
+      expect(isTopElement).toBe(true);
+    });
   });
 }
+
