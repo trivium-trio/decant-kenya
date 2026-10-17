@@ -12,15 +12,15 @@ const sorters: Record<NonNullable<ProductQuery["sort"]>, (a: Product, b: Product
 export function createMockApi(): ShopApi {
   return {
     async listProducts(query = {}) {
-      const { search, brand, family, inStockOnly, sort = "popular", page = 1, pageSize = 12 } = query;
+      const { search, brands, families, inStockOnly, sort = "popular", page = 1, pageSize = 12 } = query;
       const q = search?.trim().toLowerCase();
-      const filtered = products.filter(
-        (p) =>
-          (!q || `${p.brand} ${p.name}`.toLowerCase().includes(q)) &&
-          (!brand || p.brand === brand) &&
-          (!family || p.family === family) &&
-          (!inStockOnly || p.stock !== "out_of_stock"),
-      );
+      const filtered = products.filter((p) => {
+        const matchesSearch = !q || p.brand.toLowerCase().includes(q) || p.name.toLowerCase().includes(q);
+        const matchesBrand = !brands || brands.length === 0 || brands.includes(p.brand);
+        const matchesFamily = !families || families.length === 0 || (Boolean(p.family) && families.includes(p.family!));
+        const matchesStock = !inStockOnly || p.stock !== "out_of_stock";
+        return matchesSearch && matchesBrand && matchesFamily && matchesStock;
+      });
       const sorter = sorters[sort] ?? sorters.popular;
       const sorted = sort === "popular" ? [...filtered] : [...filtered].sort(sorter);
       const safePageSize = pageSize > 0 ? pageSize : 12;
@@ -28,6 +28,14 @@ export function createMockApi(): ShopApi {
       const safePage = Math.max(1, Math.min(page, totalPages));
       const start = (safePage - 1) * safePageSize;
       return { items: sorted.slice(start, start + safePageSize), total: sorted.length, page: safePage, pageSize: safePageSize };
+    },
+
+    async listFacets() {
+      const brands = Array.from(new Set(products.map((p) => p.brand))).sort((a, b) => a.localeCompare(b));
+      const families = Array.from(
+        new Set(products.map((p) => p.family).filter((f): f is string => Boolean(f))),
+      ).sort((a, b) => a.localeCompare(b));
+      return { brands, families };
     },
 
     async getProduct(slug) {

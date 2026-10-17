@@ -18,6 +18,7 @@ import type {
  */
 export interface ShopApi {
   listProducts(query?: ProductQuery): Promise<Paginated<Product>>;
+  listFacets(): Promise<{ brands: string[]; families: string[] }>;
   getProduct(slug: string): Promise<Product | null>;
   /** In-stock products only (FR-8). */
   getBestSellers(limit?: number): Promise<Product[]>;
