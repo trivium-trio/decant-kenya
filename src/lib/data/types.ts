@@ -112,4 +112,48 @@ export interface ConsentRecord {
   recordedAt: string;
 }
 
-// TODO: Order, delivery options and payment session types once the backend and payment provider are decided.
+// Checkout and Order contracts (FR-27, FR-28, FR-30, FR-37, FR-38)
+export interface KenyaDeliveryAddress {
+  fullName: string;
+  phone: string;
+  county: string;
+  estateOrLandmark: string;
+  buildingOrHouse: string;
+  deliveryNotes?: string;
+}
+
+export type PaymentMethod = "mpesa" | "card";
+
+export interface MpesaPaymentDetails {
+  phone: string;
+}
+
+export interface CheckoutInput {
+  items: { id: string; kind: "product" | "set"; quantity: number }[];
+  address: KenyaDeliveryAddress;
+  paymentMethod: PaymentMethod;
+  mpesaPhone?: string;
+}
+
+export interface OrderItem {
+  id: string;
+  name: string;
+  brand?: string;
+  kind: "product" | "set";
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+export interface Order {
+  id: string;
+  reference: string;
+  items: OrderItem[];
+  subtotal: number;
+  deliveryFee: number;
+  total: number;
+  address: KenyaDeliveryAddress;
+  paymentMethod: PaymentMethod;
+  paymentStatus: "paid" | "pending" | "failed";
+  createdAt: string;
+}

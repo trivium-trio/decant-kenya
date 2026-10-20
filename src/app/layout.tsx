@@ -4,6 +4,7 @@ import "./globals.css";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import { CartHydrator } from "@/components/layout/cart-hydrator";
+import { MiniCartDrawer } from "@/components/cart/mini-cart-drawer";
 import { Toaster } from "@/components/ui/sonner";
 import { siteConfig } from "@/config/site";
 
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Header />
         <div className="flex-1">{children}</div>
         <Footer />
+        <MiniCartDrawer />
         <Toaster theme="dark" position="top-center" />
       </body>
     </html>

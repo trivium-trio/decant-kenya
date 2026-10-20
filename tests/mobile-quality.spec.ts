@@ -203,6 +203,28 @@ for (const vp of mobileViewports) {
 
       expect(isTopElement).toBe(true);
     });
+
+    test("/checkout has no overflow and meets 44px target rule", async ({ page }) => {
+      await page.addInitScript(() => {
+        window.localStorage.setItem(
+          "decant-cart",
+          JSON.stringify({
+            state: { lines: [{ kind: "product", itemId: "p1", quantity: 1 }] },
+            version: 1,
+          }),
+        );
+      });
+
+      await page.goto("/checkout");
+      await checkNoOverflow(page);
+      await checkTouchTargets(page);
+    });
+
+    test("/order/sample-order-1 has no overflow and meets 44px target rule", async ({ page }) => {
+      await page.goto("/order/sample-order-1");
+      await checkNoOverflow(page);
+      await checkTouchTargets(page);
+    });
   });
 }
 
