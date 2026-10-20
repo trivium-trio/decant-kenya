@@ -677,17 +677,21 @@ The cart currently lives entirely on the client in `localStorage` (zustand persi
 - If server-side, should there be `POST /api/cart`, `PATCH /api/cart/lines/:id`, etc.?
 - A server cart would also enable server-side stock checks on every page load.
 
-### 6.3 Checkout and M-Pesa STK Push states
+### 6.3 Checkout and M-Pesa STK Push states the UI must show
 
-The frontend currently has `paymentStatus: "paid" | "pending" | "failed"` on the `Order` type. The mock sets it to `"paid"` immediately. In production with M-Pesa STK Push:
+The frontend currently models `paymentStatus: "paid" | "pending" | "failed"` on the `Order` type, and the mock sets it to `"paid"` immediately. In production with M-Pesa STK Push (the primary payment method in Kenya), the UI must explicitly represent and handle 5 core states:
 
-- The UI needs to show a **waiting state** ("Check your phone for the M-Pesa prompt…").
-- The UI needs to handle **timeout** (user didn't respond to the STK Push within ~60 seconds).
-- The UI needs a **retry path** (re-trigger the STK Push).
-- The UI needs to **poll or subscribe** for payment confirmation.
-- What does the polling/webhook flow look like? `GET /api/orders/:id` with changing `paymentStatus`? WebSocket? Server-Sent Events?
-- Should `createOrder` return immediately with `paymentStatus: "pending"` and the UI poll, or should it block until payment completes?
-- Should `paymentStatus` have additional states like `"expired"` or `"cancelled"`?
+1. **Waiting state**: The STK Push prompt has been sent to Safaricom; the UI shows an active spinner/modal ("Check your phone for the M-Pesa prompt and enter your PIN…") and begins listening/polling for payment status.
+2. **Success state**: Safaricom confirms receipt of payment; the UI marks the order as paid, clears the cart, and redirects to `/order/:id` with confirmation.
+3. **Failure state**: The user cancels the prompt, enters an incorrect PIN, or has insufficient funds; the UI displays a clear, actionable error message.
+4. **Timeout state**: The user does not interact with the prompt within Safaricom's ~60-second window; the UI transitions out of the waiting state and alerts the user that the request timed out.
+5. **Retry state**: The UI provides a single-tap "Retry M-Pesa prompt" button to re-trigger the STK push to the same phone number or edit the number without losing order form details or re-entering address data.
+
+Questions for the backend decision:
+- How does the frontend receive payment status changes? Polling `GET /api/orders/:id`, Server-Sent Events (SSE), or WebSockets?
+- Should `createOrder` return immediately with `paymentStatus: "pending"` so the client manages the waiting loop, or does an asynchronous payment intent endpoint exist?
+- Should `paymentStatus` include additional statuses such as `"expired"`, `"cancelled"`, or `"timed_out"`?
+- What idempotency keys are used when triggering a retry to avoid duplicate charges?
 
 ### 6.4 Delivery options and fees
 
