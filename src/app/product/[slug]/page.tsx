@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { siteConfig } from "@/config/site";
 import { Price } from "@/components/shared/price";
 import { AddToCartButton } from "@/components/product/add-to-cart-button";
+import { ProductCard } from "@/components/product/product-card";
 import { TrackProductView } from "@/components/product/track-product-view";
 import { getShopApi } from "@/lib/data/api";
 import { breadcrumbJsonLd, JsonLd, productJsonLd } from "@/lib/seo/json-ld";
@@ -44,7 +45,10 @@ export default async function ProductPage({ params }: Props) {
   const product = await getShopApi().getProduct(slug);
   if (!product) notFound();
 
-  const reviews = await getShopApi().listReviews({ productId: product.id });
+  const [reviews, relatedProducts] = await Promise.all([
+    getShopApi().listReviews({ productId: product.id }),
+    getShopApi().listRelatedProducts(product.id, 4),
+  ]);
   const avgRating =
     reviews.length > 0
       ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
@@ -55,7 +59,7 @@ export default async function ProductPage({ params }: Props) {
   return (
     <>
       <TrackProductView productId={product.id} />
-      <JsonLd data={productJsonLd(product)} />
+      <JsonLd data={productJsonLd(product, reviews)} />
       <JsonLd
         data={breadcrumbJsonLd([
           { name: "Home", url: siteConfig.url },
@@ -175,6 +179,28 @@ export default async function ProductPage({ params }: Props) {
             </section>
           </div>
         </div>
+
+        {/* Similar scents (FR-19) */}
+        {relatedProducts.length > 0 && (
+          <section aria-labelledby="similar-scents-heading" className="mt-16 border-t border-border pt-10">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 id="similar-scents-heading" className="text-xl font-medium tracking-tight text-foreground">
+                Similar scents
+              </h2>
+              <Link
+                href="/shop"
+                className="inline-flex min-h-11 items-center text-sm font-medium text-primary hover:underline"
+              >
+                View all
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+              {relatedProducts.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+          </section>
+        )}
       </main>
 
       {/* Mobile sticky Add to cart bar (NFR-34, hidden on md+) */}

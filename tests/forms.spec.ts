@@ -2,6 +2,12 @@ import { expect, test } from "@playwright/test";
 
 test.describe("Footer Newsletter Signup (FR-2, FR-35, FR-36)", () => {
   test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem(
+        "decant-consent",
+        JSON.stringify({ state: { status: "essential_only" }, version: 1 }),
+      );
+    });
     await page.goto("/");
   });
 
@@ -42,6 +48,12 @@ test.describe("Footer Newsletter Signup (FR-2, FR-35, FR-36)", () => {
 
 test.describe("Contact Form Page (FR-33, FR-35, FR-36)", () => {
   test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem(
+        "decant-consent",
+        JSON.stringify({ state: { status: "essential_only" }, version: 1 }),
+      );
+    });
     await page.goto("/contact");
   });
 

@@ -2,6 +2,15 @@ import { expect, test } from "@playwright/test";
 import { products } from "@/lib/data/mock/data";
 
 test.describe("Shop filters (FR-12, NFR-22)", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem(
+        "decant-consent",
+        JSON.stringify({ state: { status: "essential_only" }, version: 1 }),
+      );
+    });
+  });
+
   const brandACount = products.filter((p) => p.brand === "[Brand A]").length;
   const brandAOrBCount = products.filter(
     (p) => p.brand === "[Brand A]" || p.brand === "[Brand B]"
@@ -59,7 +68,9 @@ test.describe("Shop filters (FR-12, NFR-22)", () => {
     if (isMobile) {
       await page.getByRole("button", { name: /^Filters/ }).click();
     }
-    const container = isMobile ? page.locator("[data-slot='sheet-content']") : page.locator("aside");
+    const container = isMobile
+      ? page.locator("[data-slot='sheet-content']")
+      : page.locator("aside").filter({ hasText: "Filters" });
     await container.getByLabel("In stock only").check();
     await container.getByRole("button", { name: "Apply filters" }).click();
 
@@ -100,7 +111,7 @@ test.describe("Shop filters (FR-12, NFR-22)", () => {
   }, testInfo) => {
     const isMobile = testInfo.project.name.includes("Mobile") || (page.viewportSize()?.width ?? 1280) < 768;
     if (!isMobile) {
-      test.skip();
+      await page.setViewportSize({ width: 390, height: 844 });
     }
 
     await page.goto("/shop");

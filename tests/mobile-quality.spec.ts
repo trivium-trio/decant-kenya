@@ -41,7 +41,10 @@ for (const vp of mobileViewports) {
     test.beforeEach(async ({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
       await page.addInitScript(() => {
-        window.localStorage.clear();
+        window.localStorage.setItem(
+          "decant-consent",
+          JSON.stringify({ state: { status: "essential_only" }, version: 1 }),
+        );
       });
     });
 
@@ -264,6 +267,25 @@ for (const vp of mobileViewports) {
 
     test("404 page has no overflow and meets 44px target rule", async ({ page }) => {
       await page.goto("/non-existent-page-test-404");
+      await checkNoOverflow(page);
+      await checkTouchTargets(page);
+    });
+
+    test("/shop with search suggestions open has no overflow and meets 44px target rule", async ({ page }) => {
+      await page.goto("/shop");
+      const searchInput = page.locator("#search");
+      await searchInput.fill("Perfume");
+      await expect(page.locator("#search-suggestions-listbox")).toBeVisible();
+      await checkNoOverflow(page);
+      await checkTouchTargets(page);
+    });
+
+    test("consent banner has no overflow and meets 44px target rule", async ({ page }) => {
+      await page.goto("/");
+      const manageBtn = page.getByRole("button", { name: "Manage cookie preferences" }).first();
+      await manageBtn.click();
+      const banner = page.locator("aside[aria-label='Privacy and cookies']");
+      await expect(banner).toBeVisible();
       await checkNoOverflow(page);
       await checkTouchTargets(page);
     });

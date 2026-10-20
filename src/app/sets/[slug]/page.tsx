@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Price } from "@/components/shared/price";
 import { AddToCartButton } from "@/components/product/add-to-cart-button";
+import { TrackProductView } from "@/components/product/track-product-view";
 import { getShopApi } from "@/lib/data/api";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -34,6 +35,7 @@ export default async function SetPage({ params }: Props) {
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-10 md:px-8 md:py-14">
+      <TrackProductView productId={set.id} kind="set" />
       <h1 className="text-3xl font-medium tracking-tight md:text-4xl">{set.name}</h1>
       <p className="mt-2 text-lg text-muted-foreground">{set.description}</p>
       <Price money={set.price} className="mt-4 block text-2xl font-medium" />

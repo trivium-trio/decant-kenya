@@ -3,15 +3,19 @@ import { DiscoverySets } from "@/components/landing/discovery-sets";
 import { Hero } from "@/components/landing/hero";
 import { HowItWorks } from "@/components/landing/how-it-works";
 import { Reviews } from "@/components/landing/reviews";
+import { JsonLd, organizationJsonLd } from "@/lib/seo/json-ld";
 
 export default function HomePage() {
   return (
-    <main>
-      <Hero />
-      <DiscoverySets />
-      <BestSellers />
-      <HowItWorks />
-      <Reviews />
-    </main>
+    <>
+      <JsonLd data={organizationJsonLd()} />
+      <main>
+        <Hero />
+        <DiscoverySets />
+        <BestSellers />
+        <HowItWorks />
+        <Reviews />
+      </main>
+    </>
   );
 }
