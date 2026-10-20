@@ -1,7 +1,10 @@
 import type { ShopApi } from "../api";
 import type {
   CheckoutInput,
+  ContactInput,
+  FormSubmitResult,
   Money,
+  NewsletterInput,
   Order,
   OrderItem,
   PricedCartLine,
@@ -208,6 +211,50 @@ export function createMockApi(): ShopApi {
 
     async getOrder(id: string): Promise<Order | null> {
       return mockOrders.get(id) ?? null;
+    },
+
+    async subscribeNewsletter(input: NewsletterInput): Promise<FormSubmitResult> {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const email = input.email?.trim() ?? "";
+      if (!email || !emailRegex.test(email)) {
+        return {
+          success: false,
+          message: "Please enter a valid email address.",
+        };
+      }
+      return {
+        success: true,
+        message: "Thank you for subscribing! Check your inbox soon.",
+      };
+    },
+
+    async submitContactForm(input: ContactInput): Promise<FormSubmitResult> {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const name = input.name?.trim() ?? "";
+      const email = input.email?.trim() ?? "";
+      const subject = input.subject?.trim() ?? "";
+      const message = input.message?.trim() ?? "";
+
+      if (name.length < 2) {
+        return { success: false, message: "Please enter your name (at least 2 characters)." };
+      }
+      if (!email || !emailRegex.test(email)) {
+        return { success: false, message: "Please enter a valid email address." };
+      }
+      if (subject.length < 2) {
+        return { success: false, message: "Please enter a subject." };
+      }
+      if (message.length < 10) {
+        return { success: false, message: "Message must be at least 10 characters." };
+      }
+      if (message.length > 1000) {
+        return { success: false, message: "Message cannot exceed 1000 characters." };
+      }
+
+      return {
+        success: true,
+        message: "Thank you for reaching out! We will respond within 24 hours.",
+      };
     },
 
     async subscribeToNewsletter() {},

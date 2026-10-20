@@ -14,6 +14,13 @@ const pagesToTest = [
   { path: "/product/sample-perfume-7", name: "Product detail (sold out)" },
   { path: "/checkout", name: "Checkout page" },
   { path: "/order/sample-order-1", name: "Order confirmation page" },
+  { path: "/how-it-works", name: "How it works page" },
+  { path: "/shipping-returns", name: "Shipping and returns page" },
+  { path: "/faq", name: "FAQ page" },
+  { path: "/contact", name: "Contact page" },
+  { path: "/privacy", name: "Privacy policy page" },
+  { path: "/terms", name: "Terms of service page" },
+  { path: "/non-existent-page-test-404", name: "Custom 404 page" },
 ];
 
 for (const { path, name } of pagesToTest) {
