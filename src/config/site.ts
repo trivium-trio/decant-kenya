@@ -11,6 +11,7 @@ export const siteConfig = {
   footer: [
     { label: "Shipping and returns", href: "/shipping-returns" },
     { label: "FAQ", href: "/faq" },
+    { label: "Contact", href: "/contact" },
     { label: "Privacy", href: "/privacy" },
     { label: "Terms", href: "/terms" },
   ],

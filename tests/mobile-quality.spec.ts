@@ -225,6 +225,48 @@ for (const vp of mobileViewports) {
       await checkNoOverflow(page);
       await checkTouchTargets(page);
     });
+
+    test("/how-it-works has no overflow and meets 44px target rule", async ({ page }) => {
+      await page.goto("/how-it-works");
+      await checkNoOverflow(page);
+      await checkTouchTargets(page);
+    });
+
+    test("/shipping-returns has no overflow and meets 44px target rule", async ({ page }) => {
+      await page.goto("/shipping-returns");
+      await checkNoOverflow(page);
+      await checkTouchTargets(page);
+    });
+
+    test("/faq has no overflow and meets 44px target rule", async ({ page }) => {
+      await page.goto("/faq");
+      await checkNoOverflow(page);
+      await checkTouchTargets(page);
+    });
+
+    test("/contact has no overflow and meets 44px target rule", async ({ page }) => {
+      await page.goto("/contact");
+      await checkNoOverflow(page);
+      await checkTouchTargets(page);
+    });
+
+    test("/privacy has no overflow and meets 44px target rule", async ({ page }) => {
+      await page.goto("/privacy");
+      await checkNoOverflow(page);
+      await checkTouchTargets(page);
+    });
+
+    test("/terms has no overflow and meets 44px target rule", async ({ page }) => {
+      await page.goto("/terms");
+      await checkNoOverflow(page);
+      await checkTouchTargets(page);
+    });
+
+    test("404 page has no overflow and meets 44px target rule", async ({ page }) => {
+      await page.goto("/non-existent-page-test-404");
+      await checkNoOverflow(page);
+      await checkTouchTargets(page);
+    });
   });
 }
 

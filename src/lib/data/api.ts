@@ -3,8 +3,11 @@ import type {
   CartLine,
   CheckoutInput,
   ConsentRecord,
+  ContactInput,
   ContactMessage,
   DiscoverySet,
+  FormSubmitResult,
+  NewsletterInput,
   NewsletterSignup,
   Order,
   Paginated,
@@ -30,6 +33,8 @@ export interface ShopApi {
   validateCart(lines: CartLine[]): Promise<ValidatedCart>;
   createOrder(input: CheckoutInput): Promise<Order>;
   getOrder(id: string): Promise<Order | null>;
+  subscribeNewsletter(input: NewsletterInput): Promise<FormSubmitResult>;
+  submitContactForm(input: ContactInput): Promise<FormSubmitResult>;
   subscribeToNewsletter(input: NewsletterSignup): Promise<void>;
   sendContactMessage(input: ContactMessage): Promise<void>;
   recordConsent(input: ConsentRecord): Promise<void>;
