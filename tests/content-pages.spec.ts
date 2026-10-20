@@ -1,6 +1,15 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Static Content & Support Pages (FR-33, FR-36, NFR-21, NFR-22)", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem(
+        "decant-consent",
+        JSON.stringify({ state: { status: "essential_only" }, version: 1 }),
+      );
+    });
+  });
+
   const contentPages = [
     {
       path: "/how-it-works",

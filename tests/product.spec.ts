@@ -1,6 +1,15 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Product detail page (FR-16, FR-17, FR-18, NFR-22, NFR-34)", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem(
+        "decant-consent",
+        JSON.stringify({ state: { status: "essential_only" }, version: 1 }),
+      );
+    });
+  });
+
   test("/product/sample-perfume-1 shows h1, price, 10ml label, notes, and 2 reviews; perfume-3 shows 'No reviews yet'", async ({
     page,
   }) => {
@@ -8,7 +17,7 @@ test.describe("Product detail page (FR-16, FR-17, FR-18, NFR-22, NFR-34)", () =>
 
     // Title & details
     await expect(page.getByRole("heading", { level: 1, name: "[Perfume 1]" })).toBeVisible();
-    await expect(page.locator("main").getByText("10ml decant", { exact: true })).toBeVisible();
+    await expect(page.locator("main").getByText("10ml decant", { exact: true }).first()).toBeVisible();
     await expect(page.locator("main").getByText("Ksh 1,500").first()).toBeVisible();
 
     // Scent notes
@@ -35,7 +44,7 @@ test.describe("Product detail page (FR-16, FR-17, FR-18, NFR-22, NFR-34)", () =>
     await page.goto("/product/sample-perfume-1");
 
     // Select the button visible in this project (mobile fixed bar vs desktop inline)
-    const addBtn = page.getByRole("button", { name: /add to cart/i }).filter({ visible: true });
+    const addBtn = page.getByRole("button", { name: /add to cart \(\[Perfume 1\]\)/i }).filter({ visible: true });
     await expect(addBtn).toBeVisible();
     await addBtn.click();
 

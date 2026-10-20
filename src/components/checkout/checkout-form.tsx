@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Price } from "@/components/shared/price";
 import { useCart } from "@/lib/cart/store";
+import { track } from "@/lib/analytics/track";
 import { validateCartAction } from "@/app/cart/actions";
 import { createOrderAction } from "@/app/checkout/actions";
 import {
@@ -53,6 +54,10 @@ export function CheckoutForm() {
   const [stkModalOpen, setStkModalOpen] = useState(false);
   const [stkTargetPhone, setStkTargetPhone] = useState("");
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
+
+  useEffect(() => {
+    track({ name: "checkout_started" });
+  }, []);
 
   useEffect(() => {
     if (lines.length === 0) return;
@@ -183,6 +188,7 @@ export function CheckoutForm() {
       });
 
       setCreatedOrderId(order.id);
+      track({ name: "checkout_completed", orderId: order.id, value: order.total });
 
       if (paymentMethod === "mpesa") {
         setStkTargetPhone(effectiveMpesaPhone ?? phone);

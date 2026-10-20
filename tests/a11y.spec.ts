@@ -97,3 +97,56 @@ test("Accessibility check on Shop with filter sheet open at 390px", async ({ pag
   ).toEqual([]);
 });
 
+test("Accessibility check on /shop with search suggestions open at 390px", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/shop");
+  const searchInput = page.locator("#search");
+  await searchInput.fill("Perfume");
+  await expect(page.locator("#search-suggestions-listbox")).toBeVisible();
+
+  const scanResults = await new AxeBuilder({ page })
+    .exclude("nextjs-portal")
+    .exclude("[data-nextjs-dev-tools-button]")
+    .analyze();
+
+  const seriousOrCritical = scanResults.violations.filter(
+    (v) => v.impact === "serious" || v.impact === "critical",
+  );
+
+  expect(
+    seriousOrCritical,
+    `Expected 0 serious or critical violations on /shop with search suggestions open, found: ${JSON.stringify(
+      seriousOrCritical.map((v) => ({ id: v.id, impact: v.impact, description: v.description })),
+      null,
+      2,
+    )}`,
+  ).toEqual([]);
+});
+
+test("Accessibility check on consent banner at 390px", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await expect(page.locator("aside[aria-label='Privacy and cookies']")).toBeVisible();
+
+  const scanResults = await new AxeBuilder({ page })
+    .exclude("nextjs-portal")
+    .exclude("[data-nextjs-dev-tools-button]")
+    .analyze();
+
+  const seriousOrCritical = scanResults.violations.filter(
+    (v) => v.impact === "serious" || v.impact === "critical",
+  );
+
+  expect(
+    seriousOrCritical,
+    `Expected 0 serious or critical violations on consent banner, found: ${JSON.stringify(
+      seriousOrCritical.map((v) => ({ id: v.id, impact: v.impact, description: v.description })),
+      null,
+      2,
+    )}`,
+  ).toEqual([]);
+});
+
+

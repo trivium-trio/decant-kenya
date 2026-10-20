@@ -123,6 +123,35 @@ export interface ContactMessage {
   message: string;
 }
 
+export interface SearchSuggestion {
+  id: string;
+  slug: string;
+  name: string;
+  brand: string;
+  family: string;
+  price: number;
+  inStock: boolean;
+}
+
+export interface ConsentChoice {
+  analytics: boolean;
+  updatedAt: string;
+}
+
+export type AnalyticsEventName =
+  | "product_view"
+  | "add_to_cart"
+  | "checkout_started"
+  | "checkout_completed";
+
+export interface AnalyticsEventInput {
+  event: AnalyticsEventName;
+  itemKind?: "product" | "set";
+  itemId?: string;
+  value?: number;
+  currency?: "KES";
+}
+
 export interface ConsentRecord {
   analytics: boolean;
   marketing: boolean;

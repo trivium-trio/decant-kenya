@@ -1,7 +1,9 @@
 import { createMockApi } from "./mock";
 import type {
+  AnalyticsEventInput,
   CartLine,
   CheckoutInput,
+  ConsentChoice,
   ConsentRecord,
   ContactInput,
   ContactMessage,
@@ -14,6 +16,7 @@ import type {
   Product,
   ProductQuery,
   Review,
+  SearchSuggestion,
   ValidatedCart,
 } from "./types";
 
@@ -27,6 +30,8 @@ export interface ShopApi {
   getProduct(slug: string): Promise<Product | null>;
   /** In-stock products only (FR-8). */
   getBestSellers(limit?: number): Promise<Product[]>;
+  listRelatedProducts(productId: string, limit?: number): Promise<Product[]>;
+  suggestProducts(query: string, limit?: number): Promise<SearchSuggestion[]>;
   listSets(): Promise<DiscoverySet[]>;
   getSet(slug: string): Promise<{ set: DiscoverySet; products: Product[] } | null>;
   listReviews(options?: { productId?: string; limit?: number }): Promise<Review[]>;
@@ -37,7 +42,8 @@ export interface ShopApi {
   submitContactForm(input: ContactInput): Promise<FormSubmitResult>;
   subscribeToNewsletter(input: NewsletterSignup): Promise<void>;
   sendContactMessage(input: ContactMessage): Promise<void>;
-  recordConsent(input: ConsentRecord): Promise<void>;
+  recordConsent(choice: ConsentChoice | ConsentRecord): Promise<void>;
+  trackEvent(event: AnalyticsEventInput): Promise<void>;
   // TODO: delivery options and payment session webhooks once the backend and payment provider are decided.
 }
 

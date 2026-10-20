@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Shield, Lock, FileText, CheckCircle2 } from "lucide-react";
+import { Shield, Lock, FileText, CheckCircle2, Cookie } from "lucide-react";
+import { CookiePreferencesTrigger } from "@/components/consent/cookie-preferences-trigger";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -37,13 +38,20 @@ const inventory = [
     fields: "Email address",
     endpoint: "Server Action /api/newsletter (subscribeNewsletterAction)",
     purpose: "Sending new arrival notifications, decant restock alerts, and fragrance guides. (Consent, Sec 32)",
-    retention: "Until customer unsubscribes or 2 years of inactivity",
+    retention: "Until consent withdrawal / unsubscribe request",
+  },
+  {
+    feature: "Funnel Analytics & Measurement",
+    fields: "Event name (product_view, add_to_cart, checkout_started, checkout_completed), item ID, item kind, value (KES)",
+    endpoint: "Server Action trackEventAction via getShopApi().trackEvent",
+    purpose: "Measuring catalogue discovery interest and checkout completion funnels. (Consent, Sec 32 Kenya DPA)",
+    retention: "90 days aggregated, no personal identifiers",
   },
   {
     feature: "Privacy & Consent Preferences",
-    fields: "Consent choices (analytics/marketing preferences), timestamp",
-    endpoint: "Client-side localStorage ('decant-consent')",
-    purpose: "Respecting and remembering customer data collection preferences. (Compliance with DPA 2019)",
+    fields: "Consent choices (analytics preferences), timestamp",
+    endpoint: "Server Action recordConsentAction & localStorage ('decant-consent')",
+    purpose: "Respecting and remembering customer data collection preferences. (Compliance with Kenya DPA 2019)",
     retention: "1 year from date of preference selection",
   },
 ];
@@ -225,8 +233,24 @@ export default function PrivacyPage() {
         </div>
       </section>
 
+      {/* Cookie & Analytics Preferences (NFR-25) */}
+      <section className="mt-12 flex flex-col items-start justify-between gap-4 rounded-xl border border-border bg-card p-6 sm:flex-row sm:items-center sm:p-8" aria-labelledby="cookies-heading">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-foreground font-medium">
+            <Cookie className="size-5 text-primary" aria-hidden="true" />
+            <h2 id="cookies-heading" className="text-base font-medium text-foreground">
+              Cookie &amp; Tracking Preferences
+            </h2>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            You can change your consent settings or withdraw tracking authorization at any time under Kenya DPA.
+          </p>
+        </div>
+        <CookiePreferencesTrigger className="inline-flex min-h-11 items-center justify-center rounded-md border border-border bg-background px-5 text-sm font-medium text-foreground transition-colors hover:bg-muted" />
+      </section>
+
       {/* Contact DPO */}
-      <section className="mt-12 flex flex-col items-center justify-between gap-4 rounded-xl border border-border bg-card p-6 sm:flex-row sm:p-8">
+      <section className="mt-8 flex flex-col items-center justify-between gap-4 rounded-xl border border-border bg-card p-6 sm:flex-row sm:p-8">
         <div>
           <h2 className="text-base font-medium text-foreground">
             Questions About Your Personal Data?

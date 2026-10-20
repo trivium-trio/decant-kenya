@@ -1,11 +1,11 @@
 import Link from "next/link";
-import Form from "next/form";
 import { getShopApi } from "@/lib/data/api";
 import { ProductCard } from "@/components/product/product-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { parseShopParams, buildShopUrl, type RawSearchParams, type ShopState } from "@/lib/shop/url";
 import { SearchFocus } from "@/components/shop/search-focus";
 import { ShopFilters } from "@/components/shop/shop-filters";
+import { SearchForm } from "@/components/shop/search-form";
 import type { SortOption } from "@/lib/data/types";
 
 export const SHOP_PAGE_SIZE = 12;
@@ -96,40 +96,14 @@ export async function ShopResults({
       <SearchFocus />
 
       <div className="space-y-6">
-        {/* Search form (FR-4, Item 7) */}
-        <Form action="/shop" role="search" className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <label htmlFor="search" className="sr-only">
-            Search perfumes
-          </label>
-          <div className="relative flex-1">
-            <input
-              id="search"
-              type="search"
-              name="q"
-              defaultValue={state.q ?? ""}
-              maxLength={80}
-              placeholder="Search perfumes by name or brand..."
-              className="flex min-h-11 w-full rounded-md border border-border bg-card px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
-            />
-          </div>
-
-          {/* Preserve sort and filters through hidden inputs */}
-          {state.sort !== "popular" && <input type="hidden" name="sort" value={state.sort} />}
-          {state.inStock && <input type="hidden" name="inStock" value="1" />}
-          {state.brands.map((brand) => (
-            <input key={`search-brand-${brand}`} type="hidden" name="brand" value={brand} />
-          ))}
-          {state.families.map((family) => (
-            <input key={`search-family-${family}`} type="hidden" name="family" value={family} />
-          ))}
-
-          <button
-            type="submit"
-            className="inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            Search
-          </button>
-        </Form>
+        {/* Search form with instant suggestions (FR-4, FR-14) */}
+        <SearchForm
+          initialQuery={state.q ?? ""}
+          sort={state.sort}
+          inStock={state.inStock}
+          brands={state.brands}
+          families={state.families}
+        />
 
         {/* Layout: Sticky sidebar (md+) or bottom Sheet (<md) beside grid */}
         <div className="flex flex-col gap-6 md:flex-row md:gap-8">

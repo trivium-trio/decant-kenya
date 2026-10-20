@@ -1,6 +1,9 @@
 import type { ShopApi } from "../api";
 import type {
+  AnalyticsEventInput,
   CheckoutInput,
+  ConsentChoice,
+  ConsentRecord,
   ContactInput,
   FormSubmitResult,
   Money,
@@ -10,8 +13,12 @@ import type {
   PricedCartLine,
   Product,
   ProductQuery,
+  SearchSuggestion,
 } from "../types";
 import { products, reviews, sets } from "./data";
+
+export const mockConsentRecords: (ConsentChoice | ConsentRecord)[] = [];
+export const mockAnalyticsEvents: AnalyticsEventInput[] = [];
 
 const defaultSampleOrder: Order = {
   id: "sample-order-1",
@@ -90,6 +97,44 @@ export function createMockApi(): ShopApi {
 
     async getBestSellers(limit = 4) {
       return products.filter((p) => p.stock !== "out_of_stock").slice(0, limit);
+    },
+
+    async listRelatedProducts(productId: string, limit = 4): Promise<Product[]> {
+      const current = products.find((p) => p.id === productId);
+      if (!current) return [];
+
+      const related = products.filter((p) => {
+        if (p.id === productId || p.stock === "out_of_stock") return false;
+        const sameFamily = Boolean(current.family && p.family === current.family);
+        const sameBrand = Boolean(current.brand && p.brand === current.brand);
+        return sameFamily || sameBrand;
+      });
+
+      return related.slice(0, limit);
+    },
+
+    async suggestProducts(query: string, limit = 5): Promise<SearchSuggestion[]> {
+      const q = query.trim().toLowerCase();
+      if (q.length < 2) return [];
+
+      const matched = products
+        .filter((p) => {
+          const nameMatch = p.name.toLowerCase().includes(q);
+          const brandMatch = p.brand.toLowerCase().includes(q);
+          const familyMatch = Boolean(p.family && p.family.toLowerCase().includes(q));
+          return nameMatch || brandMatch || familyMatch;
+        })
+        .slice(0, limit);
+
+      return matched.map((p) => ({
+        id: p.id,
+        slug: p.slug,
+        name: p.name,
+        brand: p.brand,
+        family: p.family ?? "",
+        price: p.price.amount,
+        inStock: p.stock !== "out_of_stock",
+      }));
     },
 
     async listSets() {
@@ -259,6 +304,17 @@ export function createMockApi(): ShopApi {
 
     async subscribeToNewsletter() {},
     async sendContactMessage() {},
-    async recordConsent() {},
+    async recordConsent(choice: ConsentChoice | ConsentRecord): Promise<void> {
+      if (typeof choice.analytics !== "boolean") {
+        throw new Error("Invalid consent payload");
+      }
+      mockConsentRecords.push(choice);
+    },
+    async trackEvent(event: AnalyticsEventInput): Promise<void> {
+      if (!event || !event.event) {
+        throw new Error("Invalid analytics event payload");
+      }
+      mockAnalyticsEvents.push(event);
+    },
   };
 }

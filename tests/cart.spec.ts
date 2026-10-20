@@ -1,6 +1,15 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Cart functionality (FR-21, FR-23, FR-24, FR-25)", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem(
+        "decant-consent",
+        JSON.stringify({ state: { status: "essential_only" }, version: 1 }),
+      );
+    });
+  });
+
   test("add a best seller from landing page, open /cart, see line and subtotal (Ksh 1,500)", async ({ page }) => {
     await page.goto("/");
     const addToCartButton = page.getByRole("button", { name: "Add to cart" }).first();

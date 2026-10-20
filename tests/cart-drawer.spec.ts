@@ -3,13 +3,22 @@ import { expect, test } from "@playwright/test";
 test.describe("Mini-Cart Drawer (FR-23, FR-25, FR-26)", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    await page.evaluate(() => window.localStorage.clear());
+    await page.evaluate(() => {
+      window.localStorage.clear();
+      window.localStorage.setItem(
+        "decant-consent",
+        JSON.stringify({ state: { status: "essential_only" }, version: 1 }),
+      );
+    });
   });
 
   test("clicking Add to cart opens drawer automatically with line items and subtotal", async ({ page }) => {
     await page.goto("/product/sample-perfume-1");
 
-    const addToCartBtn = page.getByRole("button", { name: "Add to cart" });
+    const addToCartBtn = page
+      .getByRole("button", { name: /add to cart \(\[Perfume 1\]\)/i })
+      .filter({ visible: true })
+      .first();
     await expect(addToCartBtn).toBeVisible();
     await addToCartBtn.click();
 

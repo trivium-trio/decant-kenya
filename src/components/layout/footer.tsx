@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { siteConfig } from "@/config/site";
 import { NewsletterForm } from "@/components/newsletter/newsletter-form";
+import { CookiePreferencesTrigger } from "@/components/consent/cookie-preferences-trigger";
 
 export function Footer() {
   return (
@@ -32,6 +33,7 @@ export function Footer() {
                 {item.label}
               </Link>
             ))}
+            <CookiePreferencesTrigger />
           </nav>
           <span className="text-xs text-muted-foreground">
             © {siteConfig.name}. All rights reserved.
