@@ -12,14 +12,16 @@ const pagesToTest = [
   { path: "/shop?brand=%5BBrand+A%5D&inStock=1", name: "Shop filtered listing" },
   { path: "/product/sample-perfume-1", name: "Product detail (in stock)" },
   { path: "/product/sample-perfume-7", name: "Product detail (sold out)" },
+  { path: "/checkout", name: "Checkout page" },
+  { path: "/order/sample-order-1", name: "Order confirmation page" },
 ];
 
 for (const { path, name } of pagesToTest) {
   test(`Accessibility check on ${name} (${path}) at 390px`, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
 
-    if (path === "/cart") {
-      // Seed an item in cart so cart items are scanned
+    if (path === "/cart" || path === "/checkout") {
+      // Seed an item in cart so cart/checkout items are scanned
       await page.addInitScript(() => {
         window.localStorage.setItem(
           "decant-cart",

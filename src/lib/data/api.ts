@@ -1,10 +1,12 @@
 import { createMockApi } from "./mock";
 import type {
   CartLine,
+  CheckoutInput,
   ConsentRecord,
   ContactMessage,
   DiscoverySet,
   NewsletterSignup,
+  Order,
   Paginated,
   Product,
   ProductQuery,
@@ -26,10 +28,12 @@ export interface ShopApi {
   getSet(slug: string): Promise<{ set: DiscoverySet; products: Product[] } | null>;
   listReviews(options?: { productId?: string; limit?: number }): Promise<Review[]>;
   validateCart(lines: CartLine[]): Promise<ValidatedCart>;
+  createOrder(input: CheckoutInput): Promise<Order>;
+  getOrder(id: string): Promise<Order | null>;
   subscribeToNewsletter(input: NewsletterSignup): Promise<void>;
   sendContactMessage(input: ContactMessage): Promise<void>;
   recordConsent(input: ConsentRecord): Promise<void>;
-  // TODO: delivery options, createOrder, payment session, order status.
+  // TODO: delivery options and payment session webhooks once the backend and payment provider are decided.
 }
 
 let instance: ShopApi | undefined;

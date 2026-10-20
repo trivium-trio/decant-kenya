@@ -6,10 +6,14 @@ export const MAX_LINE_QUANTITY = 10;
 
 interface CartState {
   lines: CartLine[];
+  isDrawerOpen: boolean;
   add: (line: CartLine) => void;
   setQuantity: (kind: CartLine["kind"], itemId: string, quantity: number) => void;
   remove: (kind: CartLine["kind"], itemId: string) => void;
   clear: () => void;
+  openDrawer: () => void;
+  closeDrawer: () => void;
+  setDrawerOpen: (open: boolean) => void;
 }
 
 const matches = (l: CartLine, kind: CartLine["kind"], itemId: string) =>
@@ -34,6 +38,7 @@ export const useCart = create<CartState>()(
   persist(
     (set) => ({
       lines: [],
+      isDrawerOpen: false,
       add: (line) =>
         set((s) => {
           const qty = Math.min(Math.max(1, line.quantity), MAX_LINE_QUANTITY);
@@ -62,6 +67,9 @@ export const useCart = create<CartState>()(
       remove: (kind, itemId) =>
         set((s) => ({ lines: s.lines.filter((l) => !matches(l, kind, itemId)) })),
       clear: () => set({ lines: [] }),
+      openDrawer: () => set({ isDrawerOpen: true }),
+      closeDrawer: () => set({ isDrawerOpen: false }),
+      setDrawerOpen: (open) => set({ isDrawerOpen: open }),
     }),
     {
       name: "decant-cart",

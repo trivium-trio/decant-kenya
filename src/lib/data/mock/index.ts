@@ -1,6 +1,49 @@
 import type { ShopApi } from "../api";
-import type { Money, PricedCartLine, Product, ProductQuery } from "../types";
+import type {
+  CheckoutInput,
+  Money,
+  Order,
+  OrderItem,
+  PricedCartLine,
+  Product,
+  ProductQuery,
+} from "../types";
 import { products, reviews, sets } from "./data";
+
+const defaultSampleOrder: Order = {
+  id: "sample-order-1",
+  reference: "DK-100001",
+  items: [
+    {
+      id: "p1",
+      name: "[Perfume 1]",
+      brand: "[Brand A]",
+      kind: "product",
+      quantity: 1,
+      unitPrice: 150000,
+      totalPrice: 150000,
+    },
+  ],
+  subtotal: 150000,
+  deliveryFee: 30000,
+  total: 180000,
+  address: {
+    fullName: "Amani Kamau",
+    phone: "+254712345678",
+    county: "Nairobi",
+    estateOrLandmark: "Kilimani",
+    buildingOrHouse: "Flat 4B",
+    deliveryNotes: "Call upon arrival",
+  },
+  paymentMethod: "mpesa",
+  paymentStatus: "paid",
+  createdAt: "2026-10-20T12:00:00.000Z",
+};
+
+const mockOrders = new Map<string, Order>([
+  ["sample-order-1", defaultSampleOrder],
+  ["DK-100001", defaultSampleOrder],
+]);
 
 const sorters: Record<NonNullable<ProductQuery["sort"]>, (a: Product, b: Product) => number> = {
   popular: () => 0,
@@ -95,6 +138,76 @@ export function createMockApi(): ShopApi {
         currency,
       };
       return { lines: priced, subtotal, issues };
+    },
+
+    async createOrder(input: CheckoutInput): Promise<Order> {
+      const orderItems: OrderItem[] = [];
+      for (const item of input.items) {
+        if (item.kind === "product") {
+          const product = products.find((p) => p.id === item.id || p.slug === item.id);
+          if (!product || product.stock === "out_of_stock") {
+            throw new Error(`Product ${item.id} is out of stock or unavailable.`);
+          }
+          orderItems.push({
+            id: product.id,
+            name: product.name,
+            brand: product.brand,
+            kind: "product",
+            quantity: item.quantity,
+            unitPrice: product.price.amount,
+            totalPrice: product.price.amount * item.quantity,
+          });
+        } else {
+          const set = sets.find((s) => s.id === item.id || s.slug === item.id);
+          if (!set) {
+            throw new Error(`Discovery set ${item.id} no longer exists.`);
+          }
+          const hasSoldOut = set.productIds.some((pid) => {
+            const p = products.find((prod) => prod.id === pid);
+            return p?.stock === "out_of_stock";
+          });
+          if (hasSoldOut) {
+            throw new Error(`Discovery set ${set.name} includes a sold-out fragrance.`);
+          }
+          orderItems.push({
+            id: set.id,
+            name: set.name,
+            kind: "set",
+            quantity: item.quantity,
+            unitPrice: set.price.amount,
+            totalPrice: set.price.amount * item.quantity,
+          });
+        }
+      }
+
+      const subtotal = orderItems.reduce((acc, item) => acc + item.totalPrice, 0);
+      const deliveryFee = 30000; // Fixed KES 300 delivery fee (minor units)
+      const total = subtotal + deliveryFee;
+
+      const randomDigits = Math.floor(100000 + Math.random() * 900000);
+      const orderId = `order_${Date.now()}_${randomDigits}`;
+      const reference = `DK-${randomDigits}`;
+
+      const order: Order = {
+        id: orderId,
+        reference,
+        items: orderItems,
+        subtotal,
+        deliveryFee,
+        total,
+        address: input.address,
+        paymentMethod: input.paymentMethod,
+        paymentStatus: "paid",
+        createdAt: new Date().toISOString(),
+      };
+
+      mockOrders.set(order.id, order);
+      mockOrders.set(order.reference, order);
+      return order;
+    },
+
+    async getOrder(id: string): Promise<Order | null> {
+      return mockOrders.get(id) ?? null;
     },
 
     async subscribeToNewsletter() {},

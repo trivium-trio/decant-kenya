@@ -15,10 +15,12 @@ export interface AddToCartButtonProps {
 
 export function AddToCartButton({ kind, itemId, name, unavailable = false }: AddToCartButtonProps) {
   const add = useCart((s) => s.add);
+  const openDrawer = useCart((s) => s.openDrawer);
 
   const handleAddToCart = () => {
     if (unavailable) return;
     add({ kind, itemId, quantity: 1 });
+    openDrawer();
     track({ name: "add_to_cart", kind, itemId });
     toast("Added to cart");
   };
