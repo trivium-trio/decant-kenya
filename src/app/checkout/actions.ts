@@ -59,3 +59,33 @@ export async function createOrderAction(input: CheckoutInput): Promise<Order> {
     mpesaPhone: input.mpesaPhone ? validateKenyanPhone(input.mpesaPhone).normalized : undefined,
   });
 }
+
+export async function getOrderAction(
+  reference: string,
+  accessToken?: string
+): Promise<Order | null> {
+  if (!reference || typeof reference !== "string") {
+    return null;
+  }
+  return await getShopApi().getOrder(reference, accessToken);
+}
+
+export async function resendMpesaPromptAction(
+  reference: string,
+  accessToken: string
+): Promise<Order> {
+  if (!reference || !accessToken) {
+    throw new Error("Order reference and access token are required.");
+  }
+  return await getShopApi().resendMpesaPrompt(reference, accessToken);
+}
+
+export async function switchOrderToCardAction(
+  reference: string,
+  accessToken: string
+): Promise<{ authorizationUrl: string; order: Order }> {
+  if (!reference || !accessToken) {
+    throw new Error("Order reference and access token are required.");
+  }
+  return await getShopApi().switchOrderToCard(reference, accessToken);
+}

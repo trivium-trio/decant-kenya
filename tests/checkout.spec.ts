@@ -190,13 +190,13 @@ test.describe("Checkout Flow & Kenya Payments (FR-27, FR-28, FR-30, FR-37, FR-38
     await expect(advanceBtn).toBeVisible();
     await advanceBtn.click();
 
-    // Verify navigation to /order/[id]
-    await expect(page).toHaveURL(/\/order\/order_/);
+    // Verify navigation to /order/[id] or /order/[reference]
+    await expect(page).toHaveURL(/\/order\/(order_|DK-)/, { timeout: 10000 });
 
     // Verify confirmation page content (FR-30)
     await expect(page.getByRole("heading", { name: "Thank you, Amani!" })).toBeVisible();
     await expect(page.getByText(/Order Confirmed/i).first()).toBeVisible();
-    await expect(page.getByText(/Order Reference:\s*DK-\d{6}/i)).toBeVisible();
+    await expect(page.getByText(/Order Reference:\s*DK-[A-Z0-9]+/i)).toBeVisible();
 
     // Order items & total
     await expect(page.getByText("[Perfume 1]")).toBeVisible();

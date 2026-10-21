@@ -112,16 +112,6 @@ export interface FormSubmitResult {
   message: string;
 }
 
-export interface NewsletterSignup {
-  email: string;
-  consent: boolean;
-}
-
-export interface ContactMessage {
-  name: string;
-  email: string;
-  message: string;
-}
 
 export interface SearchSuggestion {
   id: string;
@@ -194,12 +184,17 @@ export interface OrderItem {
 export interface Order {
   id: string;
   reference: string;
+  accessToken?: string;
   items: OrderItem[];
   subtotal: number;
   deliveryFee: number;
   total: number;
   address: KenyaDeliveryAddress;
   paymentMethod: PaymentMethod;
-  paymentStatus: "paid" | "pending" | "failed";
+  paymentStatus: "pending" | "paid" | "failed" | "expired";
+  paymentFailureReason?: string;
+  fulfillmentStatus?: "processing" | "shipped" | "delivered";
+  reservationExpiresAt?: string;
+  chargeAttempts?: number;
   createdAt: string;
 }

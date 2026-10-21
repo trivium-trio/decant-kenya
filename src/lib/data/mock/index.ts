@@ -20,9 +20,20 @@ import { products, reviews, sets } from "./data";
 export const mockConsentRecords: (ConsentChoice | ConsentRecord)[] = [];
 export const mockAnalyticsEvents: AnalyticsEventInput[] = [];
 
+const BASE32_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+
+function generateBase32(length = 10): string {
+  let result = "";
+  for (let i = 0; i < length; i++) {
+    result += BASE32_ALPHABET[Math.floor(Math.random() * BASE32_ALPHABET.length)];
+  }
+  return result;
+}
+
 const defaultSampleOrder: Order = {
   id: "sample-order-1",
-  reference: "DK-100001",
+  reference: "DK-8F3K9M2X7P",
+  accessToken: "tok_sample_token_8f3k9m2x7p",
   items: [
     {
       id: "p1",
@@ -47,12 +58,16 @@ const defaultSampleOrder: Order = {
   },
   paymentMethod: "mpesa",
   paymentStatus: "paid",
+  fulfillmentStatus: "processing",
+  chargeAttempts: 1,
   createdAt: "2026-10-20T12:00:00.000Z",
+  reservationExpiresAt: "2026-10-20T12:10:00.000Z",
 };
 
 const mockOrders = new Map<string, Order>([
   ["sample-order-1", defaultSampleOrder],
   ["DK-100001", defaultSampleOrder],
+  ["DK-8F3K9M2X7P", defaultSampleOrder],
 ]);
 
 const sorters: Record<NonNullable<ProductQuery["sort"]>, (a: Product, b: Product) => number> = {
@@ -232,21 +247,46 @@ export function createMockApi(): ShopApi {
       const deliveryFee = 30000; // Fixed KES 300 delivery fee (minor units)
       const total = subtotal + deliveryFee;
 
-      const randomDigits = Math.floor(100000 + Math.random() * 900000);
-      const orderId = `order_${Date.now()}_${randomDigits}`;
-      const reference = `DK-${randomDigits}`;
+      const orderId = `order_${Date.now()}_${generateBase32(6)}`;
+      const reference = `DK-${generateBase32(10)}`;
+      const accessToken = `tok_${generateBase32(20).toLowerCase()}`;
+      const now = new Date();
+      const reservationExpiresAt = new Date(now.getTime() + 10 * 60 * 1000).toISOString();
+
+      let paymentStatus: "pending" | "paid" | "failed" | "expired" = "pending";
+      let paymentFailureReason: string | undefined = undefined;
+      const fulfillmentStatus: "processing" | "shipped" | "delivered" | undefined = undefined;
+
+      const combinedPhone = `${input.mpesaPhone ?? ""} ${input.address.phone}`;
+      const notes = input.address.deliveryNotes?.toLowerCase() ?? "";
+
+      if (combinedPhone.includes("000000") || notes.includes("test_failed")) {
+        paymentStatus = "failed";
+        paymentFailureReason = "The M-Pesa transaction was cancelled or declined by user.";
+      } else if (combinedPhone.includes("111111") || notes.includes("test_expired")) {
+        paymentStatus = "expired";
+      } else if (combinedPhone.includes("222222") || notes.includes("test_pending")) {
+        paymentStatus = "pending";
+      } else {
+        paymentStatus = "pending";
+      }
 
       const order: Order = {
         id: orderId,
         reference,
+        accessToken,
         items: orderItems,
         subtotal,
         deliveryFee,
         total,
         address: input.address,
         paymentMethod: input.paymentMethod,
-        paymentStatus: "paid",
-        createdAt: new Date().toISOString(),
+        paymentStatus,
+        paymentFailureReason,
+        fulfillmentStatus,
+        reservationExpiresAt,
+        chargeAttempts: 1,
+        createdAt: now.toISOString(),
       };
 
       mockOrders.set(order.id, order);
@@ -254,8 +294,96 @@ export function createMockApi(): ShopApi {
       return order;
     },
 
-    async getOrder(id: string): Promise<Order | null> {
-      return mockOrders.get(id) ?? null;
+    async getOrder(reference: string, accessToken?: string): Promise<Order | null> {
+      const order =
+        mockOrders.get(reference) ??
+        Array.from(mockOrders.values()).find((o) => o.id === reference || o.reference === reference);
+      if (!order) return null;
+
+      const combinedPhone = `${order.address.phone}`;
+      const notes = order.address.deliveryNotes?.toLowerCase() ?? "";
+      const isSpecialTest =
+        combinedPhone.includes("000000") ||
+        combinedPhone.includes("111111") ||
+        combinedPhone.includes("222222") ||
+        notes.includes("test_pending") ||
+        notes.includes("test_failed") ||
+        notes.includes("test_expired");
+
+      if (order.paymentStatus === "pending") {
+        if (order.reservationExpiresAt && new Date(order.reservationExpiresAt) < new Date()) {
+          order.paymentStatus = "expired";
+        } else if (!isSpecialTest) {
+          order.paymentStatus = "paid";
+          order.fulfillmentStatus = "processing";
+        }
+      }
+
+      const isAuthorized = Boolean(
+        accessToken &&
+          (accessToken === order.accessToken ||
+            accessToken === "tok_sample_token_8f3k9m2x7p" ||
+            accessToken === "test_valid_token")
+      );
+
+      if (isAuthorized) {
+        return { ...order };
+      }
+
+      return {
+        ...order,
+        accessToken: undefined,
+        address: {
+          fullName: "Customer",
+          phone: "••••••••",
+          county: order.address.county,
+          estateOrLandmark: "••••••••",
+          buildingOrHouse: "••••••••",
+          deliveryNotes: undefined,
+        },
+      };
+    },
+
+    async resendMpesaPrompt(reference: string, accessToken: string): Promise<Order> {
+      const order =
+        mockOrders.get(reference) ??
+        Array.from(mockOrders.values()).find((o) => o.id === reference || o.reference === reference);
+      if (!order || (order.accessToken && order.accessToken !== accessToken)) {
+        throw new Error("Order not found or invalid access token.");
+      }
+      if (order.paymentStatus === "paid") {
+        throw new Error("Order has already been paid.");
+      }
+      if (order.paymentStatus === "expired") {
+        throw new Error("Stock reservation expired. Please return to cart.");
+      }
+      const currentAttempts = order.chargeAttempts ?? 1;
+      if (currentAttempts >= 3) {
+        throw new Error("Maximum resend attempts reached.");
+      }
+      order.chargeAttempts = currentAttempts + 1;
+      order.paymentStatus = "pending";
+      order.paymentFailureReason = undefined;
+      return { ...order };
+    },
+
+    async switchOrderToCard(
+      reference: string,
+      accessToken: string
+    ): Promise<{ authorizationUrl: string; order: Order }> {
+      const order =
+        mockOrders.get(reference) ??
+        Array.from(mockOrders.values()).find((o) => o.id === reference || o.reference === reference);
+      if (!order || (order.accessToken && order.accessToken !== accessToken)) {
+        throw new Error("Order not found or invalid access token.");
+      }
+      if (order.paymentStatus === "paid") {
+        throw new Error("Order has already been paid.");
+      }
+      order.paymentMethod = "card";
+      order.paymentStatus = "pending";
+      const authorizationUrl = `/order/${order.reference}?token=${order.accessToken}&payment=card_simulated`;
+      return { authorizationUrl, order: { ...order } };
     },
 
     async subscribeNewsletter(input: NewsletterInput): Promise<FormSubmitResult> {
@@ -302,8 +430,6 @@ export function createMockApi(): ShopApi {
       };
     },
 
-    async subscribeToNewsletter() {},
-    async sendContactMessage() {},
     async recordConsent(choice: ConsentChoice | ConsentRecord): Promise<void> {
       if (typeof choice.analytics !== "boolean") {
         throw new Error("Invalid consent payload");
