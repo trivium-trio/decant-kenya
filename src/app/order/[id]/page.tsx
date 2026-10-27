@@ -237,6 +237,7 @@ async function OrderContent({
             {hasValidToken ? (
               <div className="text-sm space-y-1.5 text-muted-foreground">
                 <p className="font-medium text-foreground">{order.address.fullName}</p>
+                {order.email && <p>{order.email}</p>}
                 <p>{formatPhoneDisplay(order.address.phone)}</p>
                 <p>{order.address.buildingOrHouse}</p>
                 <p>{order.address.estateOrLandmark}</p>
@@ -257,7 +258,11 @@ async function OrderContent({
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
                     Customer name, phone number, and street address are hidden to protect privacy.
-                    The complete order receipt link was sent to your registered contact.
+                    {order.email && (
+                      <>
+                        {" "}A confirmation and order receipt link was sent to your email (<span className="font-mono text-foreground">{order.email}</span>).
+                      </>
+                    )}
                   </p>
                 </div>
                 <div className="text-xs text-muted-foreground space-y-1">
@@ -273,6 +278,14 @@ async function OrderContent({
                       ••••••••
                     </span>
                   </p>
+                  {order.email && (
+                    <p>
+                      Receipt:{" "}
+                      <span className="font-mono text-muted-foreground">
+                        {order.email}
+                      </span>
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -312,7 +325,7 @@ async function OrderContent({
 
             <div className="pt-2 border-t border-border flex items-center gap-2 text-xs text-muted-foreground">
               <ShieldCheck className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
-              <span>SMS dispatch alert will be sent upon courier pickup.</span>
+              <span>Email updates will be sent upon courier dispatch.</span>
             </div>
           </section>
 

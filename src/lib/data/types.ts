@@ -112,6 +112,16 @@ export interface FormSubmitResult {
   message: string;
 }
 
+export interface NewsletterSignup {
+  email: string;
+  consent: boolean;
+}
+
+export interface ContactMessage {
+  name: string;
+  email: string;
+  message: string;
+}
 
 export interface SearchSuggestion {
   id: string;
@@ -167,6 +177,7 @@ export interface MpesaPaymentDetails {
 export interface CheckoutInput {
   items: { id: string; kind: "product" | "set"; quantity: number }[];
   address: KenyaDeliveryAddress;
+  email: string;
   paymentMethod: PaymentMethod;
   mpesaPhone?: string;
 }
@@ -185,6 +196,7 @@ export interface Order {
   id: string;
   reference: string;
   accessToken?: string;
+  email?: string;
   items: OrderItem[];
   subtotal: number;
   deliveryFee: number;

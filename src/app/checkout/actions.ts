@@ -43,6 +43,12 @@ export async function createOrderAction(input: CheckoutInput): Promise<Order> {
     throw new Error("Delivery notes cannot exceed 200 characters.");
   }
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const normalizedEmail = input.email?.trim().toLowerCase();
+  if (!normalizedEmail || !emailRegex.test(normalizedEmail)) {
+    throw new Error("Please enter a valid email address for your order receipt.");
+  }
+
   if (input.paymentMethod === "mpesa" && input.mpesaPhone) {
     const mpesaVal = validateKenyanPhone(input.mpesaPhone);
     if (!mpesaVal.isValid) {
@@ -52,6 +58,7 @@ export async function createOrderAction(input: CheckoutInput): Promise<Order> {
 
   return await getShopApi().createOrder({
     ...input,
+    email: normalizedEmail,
     address: {
       ...address,
       phone: phoneVal.normalized!,

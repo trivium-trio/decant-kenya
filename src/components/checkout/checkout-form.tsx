@@ -39,6 +39,7 @@ export function CheckoutForm() {
 
   // Form fields state
   const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [county, setCounty] = useState("Nairobi");
   const [estateOrLandmark, setEstateOrLandmark] = useState("");
@@ -174,6 +175,13 @@ export function CheckoutForm() {
       newErrors.fullName = "Full name must be at least 2 characters.";
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email.trim()) {
+      newErrors.email = "Email address is required for your order receipt.";
+    } else if (!emailRegex.test(email.trim())) {
+      newErrors.email = "Please enter a valid email address.";
+    }
+
     const phoneVal = validateKenyanPhone(phone);
     if (!phoneVal.isValid) {
       newErrors.phone = phoneVal.error ?? "Please enter a valid Kenyan phone number.";
@@ -234,6 +242,7 @@ export function CheckoutForm() {
 
       const order = await createOrderAction({
         items: lines.map((l) => ({ id: l.itemId, kind: l.kind, quantity: l.quantity })),
+        email: email.trim().toLowerCase(),
         address: {
           fullName: fullName.trim(),
           phone: phone.trim(),
@@ -410,6 +419,39 @@ export function CheckoutForm() {
                   )}
                 </div>
 
+                {/* Email Address */}
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1.5">
+                    Email Address <span className="text-destructive">*</span>
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    inputMode="email"
+                    required
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (errors.email) setErrors((prev) => ({ ...prev, email: "" }));
+                    }}
+                    placeholder="e.g., amani@example.com"
+                    aria-invalid={Boolean(errors.email)}
+                    aria-describedby={errors.email ? "email-error" : "email-hint"}
+                    className="flex min-h-11 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
+                  />
+                  {errors.email ? (
+                    <p id="email-error" role="alert" className="mt-1 text-xs text-destructive">
+                      {errors.email}
+                    </p>
+                  ) : (
+                    <p id="email-hint" className="mt-1 text-xs text-muted-foreground">
+                      We send your order receipt and tracking link here.
+                    </p>
+                  )}
+                </div>
+
                 {/* Phone Number */}
                 <div>
                   <label htmlFor="phone" className="block text-sm font-medium text-foreground mb-1.5">
@@ -438,7 +480,7 @@ export function CheckoutForm() {
                     </p>
                   ) : (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      We will SMS dispatch updates to this number.
+                      Courier contact and call upon arrival.
                     </p>
                   )}
                 </div>

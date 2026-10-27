@@ -20,6 +20,9 @@ test.describe("Section 7 Payment Lifecycle Architecture", () => {
     await expect(page.getByText("0712 345 678")).not.toBeVisible();
     await expect(page.getByText("Flat 4B")).not.toBeVisible();
     await expect(page.getByText("Kilimani")).not.toBeVisible();
+    // Email is masked without valid token
+    await expect(page.getByText("a••••i@example.com").first()).toBeVisible();
+    await expect(page.getByText("amani@example.com")).not.toBeVisible();
 
     // 2. Visit with valid token
     await page.goto("/order/sample-order-1?token=tok_sample_token_8f3k9m2x7p");
@@ -27,6 +30,7 @@ test.describe("Section 7 Payment Lifecycle Architecture", () => {
     // Full recipient name & address should now be revealed
     await expect(page.getByRole("heading", { name: "Thank you, Amani!" })).toBeVisible();
     await expect(page.getByText("Amani Kamau")).toBeVisible();
+    await expect(page.getByText("amani@example.com")).toBeVisible();
     await expect(page.getByText("0712 345 678")).toBeVisible();
     await expect(page.getByText("Flat 4B")).toBeVisible();
     await expect(page.getByText("Kilimani")).toBeVisible();
@@ -49,6 +53,7 @@ test.describe("Section 7 Payment Lifecycle Architecture", () => {
     await page.goto("/checkout");
 
     await page.locator("#fullName").fill("Mwangi Njoroge");
+    await page.locator("#email").fill("mwangi@example.com");
     await page.locator("#phone").fill("0712345678");
     await page.locator("#county").selectOption("Nairobi");
     await page.locator("#estateOrLandmark").fill("Kilimani");
@@ -92,6 +97,7 @@ test.describe("Section 7 Payment Lifecycle Architecture", () => {
     await page.goto("/checkout");
 
     await page.locator("#fullName").fill("Test User");
+    await page.locator("#email").fill("testuser@example.com");
     await page.locator("#phone").fill("0700000000"); // Special test phone for failed payment
     await page.locator("#county").selectOption("Nairobi");
     await page.locator("#estateOrLandmark").fill("Westlands");
@@ -139,6 +145,7 @@ test.describe("Section 7 Payment Lifecycle Architecture", () => {
     await page.goto("/checkout");
 
     await page.locator("#fullName").fill("Expired Test");
+    await page.locator("#email").fill("expired@example.com");
     await page.locator("#phone").fill("0711111111"); // Special test phone for expired reservation
     await page.locator("#county").selectOption("Nairobi");
     await page.locator("#estateOrLandmark").fill("Parklands");
@@ -187,6 +194,7 @@ test.describe("Section 7 Payment Lifecycle Architecture", () => {
     await page.goto("/checkout");
 
     await page.locator("#fullName").fill("Waiting Test");
+    await page.locator("#email").fill("waiting@example.com");
     await page.locator("#phone").fill("0722222222"); // Special test phone for staying pending
     await page.locator("#county").selectOption("Nairobi");
     await page.locator("#estateOrLandmark").fill("Kilimani");
@@ -245,6 +253,7 @@ test.describe("Section 7 Payment Lifecycle Architecture", () => {
     await page.goto("/checkout");
 
     await page.locator("#fullName").fill("Card User");
+    await page.locator("#email").fill("carduser@example.com");
     await page.locator("#phone").fill("0712345678");
     await page.locator("#county").selectOption("Nairobi");
     await page.locator("#estateOrLandmark").fill("Westlands");
@@ -265,5 +274,66 @@ test.describe("Section 7 Payment Lifecycle Architecture", () => {
     await expect(page.getByText(/Order Confirmed/i).first()).toBeVisible();
     await expect(page.getByText(/Fulfillment:\s*Processing/i)).toBeVisible();
     await expect(page.getByRole("heading", { name: "Thank you, Card!" })).toBeVisible();
+  });
+
+  test("token safety: accessToken is never leaked to console, analytics, or unauthenticated responses", async ({
+    page,
+  }) => {
+    const consoleLogs: string[] = [];
+    page.on("console", (msg) => {
+      consoleLogs.push(msg.text());
+    });
+
+    await page.addInitScript(() => {
+      window.localStorage.setItem(
+        "decant-cart",
+        JSON.stringify({
+          state: { lines: [{ kind: "product", itemId: "p1", quantity: 1 }] },
+          version: 1,
+        })
+      );
+    });
+
+    await page.goto("/checkout");
+
+    await page.locator("#fullName").fill("Token Safe User");
+    await page.locator("#email").fill("tokensafety@example.com");
+    await page.locator("#phone").fill("0712345678");
+    await page.locator("#county").selectOption("Nairobi");
+    await page.locator("#estateOrLandmark").fill("Kilimani");
+    await page.locator("#buildingOrHouse").fill("House 10");
+
+    await page.getByRole("button", { name: /Pay with M-Pesa/i }).click();
+
+    const modal = page.getByRole("dialog");
+    await expect(modal).toBeVisible();
+
+    const advanceBtn = modal.getByRole("button", { name: /I have completed payment/i });
+    await expect(advanceBtn).toBeVisible();
+    await advanceBtn.click();
+
+    await expect(page).toHaveURL(/\/order\/DK-[0-9A-Z]{10}\?token=tok_[0-9a-z]+/);
+
+    // Extract token from URL
+    const url = new URL(page.url());
+    const token = url.searchParams.get("token");
+    expect(token).toBeTruthy();
+    expect(token).toMatch(/^tok_[0-9a-z]+$/);
+
+    // Assert console logs never contained the secret token
+    for (const log of consoleLogs) {
+      expect(log).not.toContain(token!);
+      expect(log).not.toMatch(/tok_[0-9a-z]{10,}/i);
+    }
+
+    // Now visit the order page without token (unauthenticated / guessed URL)
+    const unauthUrl = url.pathname;
+    await page.goto(unauthUrl);
+    await expect(page.getByText("Protected Customer Details")).toBeVisible();
+
+    // Verify token is NOT rendered anywhere in DOM or page source
+    const pageContent = await page.content();
+    expect(pageContent).not.toContain(token!);
+    expect(pageContent).not.toMatch(/tok_[0-9a-z]{10,}/i);
   });
 });

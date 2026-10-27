@@ -64,6 +64,7 @@ test.describe("Checkout Flow & Kenya Payments (FR-27, FR-28, FR-30, FR-37, FR-38
 
     // Inline errors should be visible
     await expect(page.getByText("Full name must be at least 2 characters.")).toBeVisible();
+    await expect(page.getByText("Email address is required for your order receipt.")).toBeVisible();
     await expect(page.getByText("Phone number is required.")).toBeVisible();
     await expect(page.getByText("Estate or landmark is required.")).toBeVisible();
     await expect(page.getByText("Building, house number or door is required.")).toBeVisible();
@@ -92,6 +93,7 @@ test.describe("Checkout Flow & Kenya Payments (FR-27, FR-28, FR-30, FR-37, FR-38
     const submitBtn = page.getByRole("button", { name: /Pay with M-Pesa/i });
 
     await nameInput.fill("Wanjiku Mwangi");
+    await page.locator("#email").fill("wanjiku@example.com");
     await estateInput.fill("Kilimani");
     await buildingInput.fill("House 12");
 
@@ -168,6 +170,7 @@ test.describe("Checkout Flow & Kenya Payments (FR-27, FR-28, FR-30, FR-37, FR-38
 
     // Fill valid delivery info
     await page.locator("#fullName").fill("Amani Kamau");
+    await page.locator("#email").fill("amani@example.com");
     await page.locator("#phone").fill("0712345678");
     await page.locator("#county").selectOption("Nairobi");
     await page.locator("#estateOrLandmark").fill("Westlands, Near Sarit");
@@ -207,6 +210,7 @@ test.describe("Checkout Flow & Kenya Payments (FR-27, FR-28, FR-30, FR-37, FR-38
     // Delivery address details
     const shippingSection = page.locator("section[aria-labelledby='shipping-heading']");
     await expect(shippingSection.getByText("Amani Kamau")).toBeVisible();
+    await expect(shippingSection.getByText("amani@example.com")).toBeVisible();
     await expect(shippingSection.getByText("0712 345 678")).toBeVisible();
     await expect(shippingSection.getByText("Woodvale Grove, Flat 4B")).toBeVisible();
     await expect(page.getByText("Nairobi, Kenya")).toBeVisible();

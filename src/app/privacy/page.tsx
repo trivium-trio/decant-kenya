@@ -14,9 +14,9 @@ export const metadata: Metadata = {
 const inventory = [
   {
     feature: "Checkout & Order Delivery",
-    fields: "Full name, phone number (+254 format), county, estate or landmark, building or house number, delivery notes",
+    fields: "Full name, email address, phone number (+254 format), county, estate or landmark, building or house number, delivery notes",
     endpoint: "Server Action /api/checkout (submitCheckoutAction)",
-    purpose: "Order fulfillment, courier dispatch, customer communication, and statutory financial accounting. (Contractual necessity, Sec 30(b))",
+    purpose: "Order fulfillment, courier dispatch, customer email for order receipt and payment processing (transactional only, not newsletter consent), and statutory financial accounting. (Contractual necessity, Sec 30(b))",
     retention: "7 years (Statutory Kenyan tax and financial record requirements)",
   },
   {
