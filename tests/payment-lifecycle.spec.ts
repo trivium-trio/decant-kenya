@@ -16,13 +16,13 @@ test.describe("Section 7 Payment Lifecycle Architecture", () => {
 
     // PII should be completely protected
     await expect(page.getByText("Protected Customer Details")).toBeVisible();
+    await expect(page.getByText("A confirmation was sent to the email you provided.")).toBeVisible();
     await expect(page.getByText("Amani Kamau")).not.toBeVisible();
     await expect(page.getByText("0712 345 678")).not.toBeVisible();
     await expect(page.getByText("Flat 4B")).not.toBeVisible();
     await expect(page.getByText("Kilimani")).not.toBeVisible();
-    // Email is masked without valid token
-    await expect(page.getByText("a••••i@example.com").first()).toBeVisible();
     await expect(page.getByText("amani@example.com")).not.toBeVisible();
+    await expect(page.getByText(/@/)).not.toBeVisible();
 
     // 2. Visit with valid token
     await page.goto("/order/sample-order-1?token=tok_sample_token_8f3k9m2x7p");
@@ -335,5 +335,52 @@ test.describe("Section 7 Payment Lifecycle Architecture", () => {
     const pageContent = await page.content();
     expect(pageContent).not.toContain(token!);
     expect(pageContent).not.toMatch(/tok_[0-9a-z]{10,}/i);
+  });
+
+  test("order pages serve Referrer-Policy: no-referrer and Cache-Control: private, no-store", async ({
+    page,
+  }) => {
+    const response = await page.goto("/order/sample-order-1");
+    expect(response).not.toBeNull();
+    const headers = response!.headers();
+    expect(headers["referrer-policy"]).toBe("no-referrer");
+    expect(headers["cache-control"]).toContain("no-store");
+  });
+
+  test("accepts complex email addresses including sub-addressing (name+tag@example.co.ke)", async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem(
+        "decant-cart",
+        JSON.stringify({
+          state: { lines: [{ kind: "product", itemId: "p1", quantity: 1 }] },
+          version: 1,
+        })
+      );
+    });
+
+    await page.goto("/checkout");
+
+    await page.locator("#fullName").fill("Tag Test User");
+    await page.locator("#email").fill("name+tag@example.co.ke");
+    await page.locator("#phone").fill("0712345678");
+    await page.locator("#county").selectOption("Nairobi");
+    await page.locator("#estateOrLandmark").fill("Kilimani");
+    await page.locator("#buildingOrHouse").fill("House 10");
+
+    await page.getByRole("button", { name: /Pay with M-Pesa/i }).click();
+
+    const modal = page.getByRole("dialog");
+    await expect(modal).toBeVisible();
+
+    const advanceBtn = modal.getByRole("button", { name: /I have completed payment/i });
+    await expect(advanceBtn).toBeVisible();
+    await advanceBtn.click();
+
+    await expect(page).toHaveURL(/\/order\/DK-[0-9A-Z]{10}\?token=tok_[0-9a-z]+/);
+
+    // Delivery details with valid token shows the tagged email
+    await expect(page.getByText("name+tag@example.co.ke")).toBeVisible();
   });
 });

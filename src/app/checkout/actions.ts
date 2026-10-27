@@ -2,7 +2,7 @@
 
 import { getShopApi } from "@/lib/data/api";
 import type { CheckoutInput, Order } from "@/lib/data/types";
-import { validateKenyanPhone } from "@/lib/checkout/validation";
+import { validateEmail, validateKenyanPhone } from "@/lib/checkout/validation";
 
 export async function createOrderAction(input: CheckoutInput): Promise<Order> {
   if (!input || typeof input !== "object") {
@@ -43,11 +43,11 @@ export async function createOrderAction(input: CheckoutInput): Promise<Order> {
     throw new Error("Delivery notes cannot exceed 200 characters.");
   }
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const normalizedEmail = input.email?.trim().toLowerCase();
-  if (!normalizedEmail || !emailRegex.test(normalizedEmail)) {
-    throw new Error("Please enter a valid email address for your order receipt.");
+  const emailVal = validateEmail(input.email ?? "");
+  if (!emailVal.isValid || !emailVal.normalized) {
+    throw new Error(emailVal.error ?? "Please enter a valid email address for your order receipt.");
   }
+  const normalizedEmail = emailVal.normalized;
 
   if (input.paymentMethod === "mpesa" && input.mpesaPhone) {
     const mpesaVal = validateKenyanPhone(input.mpesaPhone);

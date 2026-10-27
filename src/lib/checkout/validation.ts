@@ -89,3 +89,31 @@ export function formatPhoneDisplay(phone: string): string {
   const local = `0${normalized.slice(4)}`;
   return `${local.slice(0, 4)} ${local.slice(4, 7)} ${local.slice(7)}`;
 }
+
+/**
+ * Validates customer email for order receipting and notifications.
+ * Supports standards-compliant emails including sub-addressing (name+tag@example.co.ke)
+ * and regional/multi-part domain names (.co.ke, .ac.ke, etc.).
+ */
+export function validateEmail(email: string): {
+  isValid: boolean;
+  normalized?: string;
+  error?: string;
+} {
+  const trimmed = email.trim();
+  if (!trimmed) {
+    return { isValid: false, error: "Email address is required for your order receipt." };
+  }
+
+  const emailRegex =
+    /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+
+  if (!emailRegex.test(trimmed)) {
+    return {
+      isValid: false,
+      error: "Please enter a valid email address (e.g. name+tag@example.co.ke).",
+    };
+  }
+
+  return { isValid: true, normalized: trimmed.toLowerCase() };
+}

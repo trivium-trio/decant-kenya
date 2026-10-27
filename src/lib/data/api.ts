@@ -6,11 +6,9 @@ import type {
   ConsentChoice,
   ConsentRecord,
   ContactInput,
-  ContactMessage,
   DiscoverySet,
   FormSubmitResult,
   NewsletterInput,
-  NewsletterSignup,
   Order,
   Paginated,
   Product,
@@ -41,9 +39,7 @@ export interface ShopApi {
   resendMpesaPrompt(reference: string, accessToken: string): Promise<Order>;
   switchOrderToCard(reference: string, accessToken: string): Promise<{ authorizationUrl: string; order: Order }>;
   subscribeNewsletter(input: NewsletterInput): Promise<FormSubmitResult>;
-  subscribeToNewsletter(input: NewsletterSignup): Promise<void>;
   submitContactForm(input: ContactInput): Promise<FormSubmitResult>;
-  sendContactMessage(input: ContactMessage): Promise<void>;
   recordConsent(choice: ConsentChoice | ConsentRecord): Promise<void>;
   trackEvent(event: AnalyticsEventInput): Promise<void>;
   // TODO: delivery options and payment session webhooks once the backend and payment provider are decided.

@@ -112,17 +112,6 @@ export interface FormSubmitResult {
   message: string;
 }
 
-export interface NewsletterSignup {
-  email: string;
-  consent: boolean;
-}
-
-export interface ContactMessage {
-  name: string;
-  email: string;
-  message: string;
-}
-
 export interface SearchSuggestion {
   id: string;
   slug: string;

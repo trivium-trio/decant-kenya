@@ -16,6 +16,7 @@ import {
 import {
   KENYA_COUNTIES,
   formatPhoneDisplay,
+  validateEmail,
   validateKenyanPhone,
 } from "@/lib/checkout/validation";
 import type { Order, PaymentMethod, PricedCartLine, ValidatedCart } from "@/lib/data/types";
@@ -175,11 +176,9 @@ export function CheckoutForm() {
       newErrors.fullName = "Full name must be at least 2 characters.";
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email.trim()) {
-      newErrors.email = "Email address is required for your order receipt.";
-    } else if (!emailRegex.test(email.trim())) {
-      newErrors.email = "Please enter a valid email address.";
+    const emailVal = validateEmail(email);
+    if (!emailVal.isValid) {
+      newErrors.email = emailVal.error ?? "Please enter a valid email address.";
     }
 
     const phoneVal = validateKenyanPhone(phone);

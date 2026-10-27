@@ -5,11 +5,9 @@ import type {
   ConsentChoice,
   ConsentRecord,
   ContactInput,
-  ContactMessage,
   FormSubmitResult,
   Money,
   NewsletterInput,
-  NewsletterSignup,
   Order,
   OrderItem,
   PricedCartLine,
@@ -30,14 +28,6 @@ function generateBase32(length = 10): string {
     result += BASE32_ALPHABET[Math.floor(Math.random() * BASE32_ALPHABET.length)];
   }
   return result;
-}
-
-function maskEmail(email?: string): string | undefined {
-  if (!email) return undefined;
-  const [user, domain] = email.split("@");
-  if (!domain) return "••••••••";
-  const maskedUser = user.length > 2 ? `${user[0]}••••${user[user.length - 1]}` : "••••";
-  return `${maskedUser}@${domain}`;
 }
 
 const defaultSampleOrder: Order = {
@@ -345,7 +335,7 @@ export function createMockApi(): ShopApi {
       return {
         ...order,
         accessToken: undefined,
-        email: maskEmail(order.email),
+        email: undefined,
         address: {
           fullName: "Customer",
           phone: "••••••••",
@@ -414,10 +404,6 @@ export function createMockApi(): ShopApi {
       };
     },
 
-    async subscribeToNewsletter(input: NewsletterSignup): Promise<void> {
-      void input;
-    },
-
     async submitContactForm(input: ContactInput): Promise<FormSubmitResult> {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       const name = input.name?.trim() ?? "";
@@ -445,10 +431,6 @@ export function createMockApi(): ShopApi {
         success: true,
         message: "Thank you for reaching out! We will respond within 24 hours.",
       };
-    },
-
-    async sendContactMessage(input: ContactMessage): Promise<void> {
-      void input;
     },
 
     async recordConsent(choice: ConsentChoice | ConsentRecord): Promise<void> {

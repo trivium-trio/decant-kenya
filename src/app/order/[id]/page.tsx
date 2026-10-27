@@ -258,11 +258,7 @@ async function OrderContent({
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
                     Customer name, phone number, and street address are hidden to protect privacy.
-                    {order.email && (
-                      <>
-                        {" "}A confirmation and order receipt link was sent to your email (<span className="font-mono text-foreground">{order.email}</span>).
-                      </>
-                    )}
+                    A confirmation was sent to the email you provided.
                   </p>
                 </div>
                 <div className="text-xs text-muted-foreground space-y-1">
@@ -278,14 +274,6 @@ async function OrderContent({
                       ••••••••
                     </span>
                   </p>
-                  {order.email && (
-                    <p>
-                      Receipt:{" "}
-                      <span className="font-mono text-muted-foreground">
-                        {order.email}
-                      </span>
-                    </p>
-                  )}
                 </div>
               </div>
             )}
