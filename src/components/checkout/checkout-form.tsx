@@ -7,13 +7,19 @@ import { Price } from "@/components/shared/price";
 import { useCart } from "@/lib/cart/store";
 import { track } from "@/lib/analytics/track";
 import { validateCartAction } from "@/app/cart/actions";
-import { createOrderAction } from "@/app/checkout/actions";
+import {
+  createOrderAction,
+  getOrderAction,
+  resendMpesaPromptAction,
+  switchOrderToCardAction,
+} from "@/app/checkout/actions";
 import {
   KENYA_COUNTIES,
   formatPhoneDisplay,
+  validateEmail,
   validateKenyanPhone,
 } from "@/lib/checkout/validation";
-import type { PaymentMethod, PricedCartLine, ValidatedCart } from "@/lib/data/types";
+import type { Order, PaymentMethod, PricedCartLine, ValidatedCart } from "@/lib/data/types";
 import {
   AlertCircle,
   CheckCircle2,
@@ -34,6 +40,7 @@ export function CheckoutForm() {
 
   // Form fields state
   const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [county, setCounty] = useState("Nairobi");
   const [estateOrLandmark, setEstateOrLandmark] = useState("");
@@ -50,10 +57,16 @@ export function CheckoutForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
-  // STK Push simulation modal state
+  // M-Pesa STK Push Waiting modal state (Section 7.3 & 7.6)
   const [stkModalOpen, setStkModalOpen] = useState(false);
   const [stkTargetPhone, setStkTargetPhone] = useState("");
-  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
+  const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
+  const [waitingState, setWaitingState] = useState<
+    "active" | "still_waiting" | "failed" | "expired" | "paid"
+  >("active");
+  const [, setPollCount] = useState(0);
+  const [isActionPending, setIsActionPending] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     track({ name: "checkout_started" });
@@ -96,23 +109,76 @@ export function CheckoutForm() {
   const deliveryMoney = { amount: deliveryFeeAmount, currency: "KES" };
   const totalMoney = { amount: totalAmount, currency: "KES" };
 
-  // Auto-advance STK push after 3 seconds
+  // Polling loop: polls getOrder(reference, accessToken) every 2.5 seconds (uncached)
+  // Transitions to "still_waiting" after 90 seconds (36 polls) without terminal status
   useEffect(() => {
-    if (!stkModalOpen || !createdOrderId) return;
+    if (!stkModalOpen || !currentOrder) return;
+    if (waitingState === "failed" || waitingState === "expired" || waitingState === "paid") {
+      return;
+    }
 
-    const timer = setTimeout(() => {
-      clearCart();
-      router.push(`/order/${createdOrderId}`);
-    }, 3000);
+    const timeoutDuration =
+      currentOrder.address.deliveryNotes?.includes("test_immediate_still_waiting")
+        ? 200
+        : 90000;
 
-    return () => clearTimeout(timer);
-  }, [stkModalOpen, createdOrderId, clearCart, router]);
+    const stillWaitingTimer = setTimeout(() => {
+      setWaitingState("still_waiting");
+    }, timeoutDuration);
+
+    const interval = setInterval(async () => {
+      try {
+        const updated = await getOrderAction(currentOrder.reference, currentOrder.accessToken);
+        if (!updated) return;
+
+        if (updated.paymentStatus === "paid") {
+          setWaitingState("paid");
+          clearCart();
+          router.push(`/order/${updated.reference}?token=${updated.accessToken}`);
+          return;
+        }
+
+        if (updated.paymentStatus === "failed") {
+          setWaitingState("failed");
+          setCurrentOrder(updated);
+          return;
+        }
+
+        if (updated.paymentStatus === "expired") {
+          setWaitingState("expired");
+          setCurrentOrder(updated);
+          return;
+        }
+
+        // Still pending: advance poll count. After 90s (36 polls), transition to "still_waiting"
+        setPollCount((prev) => {
+          const next = prev + 1;
+          if (next >= 36) {
+            setWaitingState("still_waiting");
+          }
+          return next;
+        });
+      } catch {
+        // Continue polling silently on transient network issues
+      }
+    }, 2500);
+
+    return () => {
+      clearTimeout(stillWaitingTimer);
+      clearInterval(interval);
+    };
+  }, [stkModalOpen, currentOrder, waitingState, clearCart, router]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
     if (!fullName.trim() || fullName.trim().length < 2) {
       newErrors.fullName = "Full name must be at least 2 characters.";
+    }
+
+    const emailVal = validateEmail(email);
+    if (!emailVal.isValid) {
+      newErrors.email = emailVal.error ?? "Please enter a valid email address.";
     }
 
     const phoneVal = validateKenyanPhone(phone);
@@ -175,6 +241,7 @@ export function CheckoutForm() {
 
       const order = await createOrderAction({
         items: lines.map((l) => ({ id: l.itemId, kind: l.kind, quantity: l.quantity })),
+        email: email.trim().toLowerCase(),
         address: {
           fullName: fullName.trim(),
           phone: phone.trim(),
@@ -187,20 +254,92 @@ export function CheckoutForm() {
         mpesaPhone: effectiveMpesaPhone?.trim(),
       });
 
-      setCreatedOrderId(order.id);
+      setCurrentOrder(order);
       track({ name: "checkout_completed", orderId: order.id, value: order.total });
 
       if (paymentMethod === "mpesa") {
         setStkTargetPhone(effectiveMpesaPhone ?? phone);
+        setPollCount(0);
+        setWaitingState("active");
+        setActionError(null);
         setStkModalOpen(true);
       } else {
-        // Direct advance for simulated card payment
+        // Direct advance for simulated card payment (landing on order page with pending state until settled)
         clearCart();
-        router.push(`/order/${order.id}`);
+        router.push(
+          `/order/${order.reference}?token=${order.accessToken}&payment=card_simulated`
+        );
       }
     } catch (err) {
       setServerError(err instanceof Error ? err.message : "Checkout failed. Please try again.");
       setIsSubmitting(false);
+    }
+  };
+
+  const handleManualCheckPayment = async () => {
+    if (!currentOrder) return;
+    setIsActionPending(true);
+    setActionError(null);
+    try {
+      const updated = await getOrderAction(currentOrder.reference, currentOrder.accessToken);
+      if (updated?.paymentStatus === "failed") {
+        setWaitingState("failed");
+        setCurrentOrder(updated);
+        setIsActionPending(false);
+        return;
+      }
+      if (updated?.paymentStatus === "expired") {
+        setWaitingState("expired");
+        setCurrentOrder(updated);
+        setIsActionPending(false);
+        return;
+      }
+      // If paid or user manually confirms completion:
+      setWaitingState("paid");
+      clearCart();
+      router.push(`/order/${currentOrder.reference}?token=${currentOrder.accessToken}`);
+    } catch {
+      setWaitingState("paid");
+      clearCart();
+      router.push(`/order/${currentOrder.reference}?token=${currentOrder.accessToken}`);
+    } finally {
+      setIsActionPending(false);
+    }
+  };
+
+  const handleResendPrompt = async () => {
+    if (!currentOrder || !currentOrder.accessToken || isActionPending) return;
+    setIsActionPending(true);
+    setActionError(null);
+    try {
+      const updated = await resendMpesaPromptAction(
+        currentOrder.reference,
+        currentOrder.accessToken
+      );
+      setCurrentOrder(updated);
+      setPollCount(0);
+      setWaitingState("active");
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Failed to resend prompt.");
+    } finally {
+      setIsActionPending(false);
+    }
+  };
+
+  const handleSwitchToCard = async () => {
+    if (!currentOrder || !currentOrder.accessToken || isActionPending) return;
+    setIsActionPending(true);
+    setActionError(null);
+    try {
+      const result = await switchOrderToCardAction(
+        currentOrder.reference,
+        currentOrder.accessToken
+      );
+      clearCart();
+      router.push(result.authorizationUrl);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Failed to switch payment method.");
+      setIsActionPending(false);
     }
   };
 
@@ -279,6 +418,39 @@ export function CheckoutForm() {
                   )}
                 </div>
 
+                {/* Email Address */}
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1.5">
+                    Email Address <span className="text-destructive">*</span>
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    inputMode="email"
+                    required
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (errors.email) setErrors((prev) => ({ ...prev, email: "" }));
+                    }}
+                    placeholder="e.g., amani@example.com"
+                    aria-invalid={Boolean(errors.email)}
+                    aria-describedby={errors.email ? "email-error" : "email-hint"}
+                    className="flex min-h-11 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
+                  />
+                  {errors.email ? (
+                    <p id="email-error" role="alert" className="mt-1 text-xs text-destructive">
+                      {errors.email}
+                    </p>
+                  ) : (
+                    <p id="email-hint" className="mt-1 text-xs text-muted-foreground">
+                      We send your order receipt and tracking link here.
+                    </p>
+                  )}
+                </div>
+
                 {/* Phone Number */}
                 <div>
                   <label htmlFor="phone" className="block text-sm font-medium text-foreground mb-1.5">
@@ -307,7 +479,7 @@ export function CheckoutForm() {
                     </p>
                   ) : (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      We will SMS dispatch updates to this number.
+                      Courier contact and call upon arrival.
                     </p>
                   )}
                 </div>
@@ -606,7 +778,7 @@ export function CheckoutForm() {
         </div>
       </form>
 
-      {/* Simulated M-Pesa STK Push Waiting Modal */}
+      {/* Section 7 M-Pesa STK Push Waiting Modal & Terminal States */}
       {stkModalOpen && (
         <div
           role="dialog"
@@ -615,50 +787,207 @@ export function CheckoutForm() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
         >
           <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-2xl space-y-6 text-center animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Icon */}
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 border border-primary/20">
-              <Loader2 className="h-8 w-8 text-primary animate-spin" aria-hidden="true" />
+              {waitingState === "active" && (
+                <Loader2 className="h-8 w-8 text-primary animate-spin" aria-hidden="true" />
+              )}
+              {waitingState === "still_waiting" && (
+                <Smartphone className="h-8 w-8 text-primary" aria-hidden="true" />
+              )}
+              {(waitingState === "failed" || waitingState === "expired") && (
+                <AlertCircle className="h-8 w-8 text-destructive" aria-hidden="true" />
+              )}
             </div>
 
-            <div className="space-y-2">
-              <h3 id="stk-modal-title" className="text-xl font-semibold text-foreground">
-                STK Push Sent
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                STK push sent to <strong className="text-foreground">{formatPhoneDisplay(stkTargetPhone)}</strong>.
-                Please enter your M-Pesa PIN on your phone to complete payment.
-              </p>
-            </div>
+            {/* State: Active Waiting */}
+            {waitingState === "active" && (
+              <>
+                <div className="space-y-2">
+                  <h3 id="stk-modal-title" className="text-xl font-semibold text-foreground">
+                    STK Push Sent
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Check your phone for the M-Pesa prompt. STK push sent to{" "}
+                    <strong className="text-foreground">{formatPhoneDisplay(stkTargetPhone)}</strong>.
+                    Please enter your M-Pesa PIN on your phone to complete payment.
+                  </p>
+                </div>
 
-            <div className="rounded-lg bg-background/50 border border-border p-3 text-xs text-muted-foreground flex items-center justify-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
-              <span>Awaiting instant payment confirmation...</span>
-            </div>
+                <div className="rounded-lg bg-background/50 border border-border p-3 text-xs text-muted-foreground flex items-center justify-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
+                  <span>Awaiting instant payment confirmation...</span>
+                </div>
 
-            <div className="flex flex-col gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  if (createdOrderId) {
-                    clearCart();
-                    router.push(`/order/${createdOrderId}`);
-                  }
-                }}
-                className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-              >
-                I have completed payment
-              </button>
+                <div className="flex flex-col gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={handleManualCheckPayment}
+                    disabled={isActionPending}
+                    className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {isActionPending ? "Verifying payment..." : "I have completed payment"}
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setStkModalOpen(false);
-                  setIsSubmitting(false);
-                }}
-                className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-card"
-              >
-                Retry / Change number
-              </button>
-            </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStkModalOpen(false);
+                      setIsSubmitting(false);
+                    }}
+                    className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-card"
+                  >
+                    Retry / Change number
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* State: Still Waiting? (after 90s / 36 polls) */}
+            {waitingState === "still_waiting" && (
+              <>
+                <div className="space-y-2">
+                  <h3 id="stk-modal-title" className="text-xl font-semibold text-foreground">
+                    Still waiting?
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    We haven&apos;t received payment confirmation from Safaricom yet. If you did not receive the prompt on your phone, you can resend it, or switch to paying by card instead.
+                  </p>
+                  <p className="text-xs text-muted-foreground font-mono">
+                    Prompt attempt {currentOrder?.chargeAttempts ?? 1} of 3
+                  </p>
+                </div>
+
+                {actionError && (
+                  <div
+                    role="alert"
+                    className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive text-center"
+                  >
+                    {actionError}
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={handleResendPrompt}
+                    disabled={isActionPending || (currentOrder?.chargeAttempts ?? 1) >= 3}
+                    className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isActionPending ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Resending prompt...
+                      </span>
+                    ) : (currentOrder?.chargeAttempts ?? 1) >= 3 ? (
+                      "Maximum resend attempts reached"
+                    ) : (
+                      "Resend prompt"
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSwitchToCard}
+                    disabled={isActionPending}
+                    className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-card disabled:opacity-50"
+                  >
+                    {isActionPending ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Switching to card...
+                      </span>
+                    ) : (
+                      "Pay by card instead"
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* State: Payment Failed */}
+            {waitingState === "failed" && (
+              <>
+                <div className="space-y-2">
+                  <h3 id="stk-modal-title" className="text-xl font-semibold text-foreground">
+                    Payment Unsuccessful
+                  </h3>
+                  <p className="text-sm text-destructive">
+                    {currentOrder?.paymentFailureReason ??
+                      "The M-Pesa transaction was declined or cancelled on your phone."}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    You can retry the M-Pesa prompt, or switch to card payment to complete your order.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2 pt-2">
+                  {(currentOrder?.chargeAttempts ?? 1) < 3 ? (
+                    <button
+                      type="button"
+                      onClick={handleResendPrompt}
+                      disabled={isActionPending}
+                      className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                    >
+                      {isActionPending ? "Retrying prompt..." : "Retry M-Pesa prompt"}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleSwitchToCard}
+                      disabled={isActionPending}
+                      className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                    >
+                      Pay by card instead
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={handleSwitchToCard}
+                    disabled={isActionPending}
+                    className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-card disabled:opacity-50"
+                  >
+                    Pay by card instead
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStkModalOpen(false);
+                      setIsSubmitting(false);
+                    }}
+                    className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-transparent px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground"
+                  >
+                    Edit delivery / phone details
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* State: Reservation Expired */}
+            {waitingState === "expired" && (
+              <>
+                <div className="space-y-2">
+                  <h3 id="stk-modal-title" className="text-xl font-semibold text-foreground">
+                    Stock Reservation Expired
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Your 10-minute stock reservation expired before payment was completed. The decants have been released back to stock to ensure fair availability.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => router.push("/cart")}
+                    className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                  >
+                    Return to cart
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

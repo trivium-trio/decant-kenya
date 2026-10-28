@@ -2,7 +2,7 @@
 
 import { getShopApi } from "@/lib/data/api";
 import type { CheckoutInput, Order } from "@/lib/data/types";
-import { validateKenyanPhone } from "@/lib/checkout/validation";
+import { validateEmail, validateKenyanPhone } from "@/lib/checkout/validation";
 
 export async function createOrderAction(input: CheckoutInput): Promise<Order> {
   if (!input || typeof input !== "object") {
@@ -43,6 +43,12 @@ export async function createOrderAction(input: CheckoutInput): Promise<Order> {
     throw new Error("Delivery notes cannot exceed 200 characters.");
   }
 
+  const emailVal = validateEmail(input.email ?? "");
+  if (!emailVal.isValid || !emailVal.normalized) {
+    throw new Error(emailVal.error ?? "Please enter a valid email address for your order receipt.");
+  }
+  const normalizedEmail = emailVal.normalized;
+
   if (input.paymentMethod === "mpesa" && input.mpesaPhone) {
     const mpesaVal = validateKenyanPhone(input.mpesaPhone);
     if (!mpesaVal.isValid) {
@@ -52,10 +58,41 @@ export async function createOrderAction(input: CheckoutInput): Promise<Order> {
 
   return await getShopApi().createOrder({
     ...input,
+    email: normalizedEmail,
     address: {
       ...address,
       phone: phoneVal.normalized!,
     },
     mpesaPhone: input.mpesaPhone ? validateKenyanPhone(input.mpesaPhone).normalized : undefined,
   });
+}
+
+export async function getOrderAction(
+  reference: string,
+  accessToken?: string
+): Promise<Order | null> {
+  if (!reference || typeof reference !== "string") {
+    return null;
+  }
+  return await getShopApi().getOrder(reference, accessToken);
+}
+
+export async function resendMpesaPromptAction(
+  reference: string,
+  accessToken: string
+): Promise<Order> {
+  if (!reference || !accessToken) {
+    throw new Error("Order reference and access token are required.");
+  }
+  return await getShopApi().resendMpesaPrompt(reference, accessToken);
+}
+
+export async function switchOrderToCardAction(
+  reference: string,
+  accessToken: string
+): Promise<{ authorizationUrl: string; order: Order }> {
+  if (!reference || !accessToken) {
+    throw new Error("Order reference and access token are required.");
+  }
+  return await getShopApi().switchOrderToCard(reference, accessToken);
 }
