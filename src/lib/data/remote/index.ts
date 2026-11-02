@@ -26,7 +26,7 @@ function getBackendUrl(): string {
   return url.replace(/\/+$/, "");
 }
 
-async function getForwardedHeaders(): Promise<Record<string, string>> {
+async function getForwardedHeaders(includeClientIp = false): Promise<Record<string, string>> {
   const reqHeaders: Record<string, string> = {
     Accept: "application/json",
   };
@@ -36,8 +36,9 @@ async function getForwardedHeaders(): Promise<Record<string, string>> {
     reqHeaders["X-Storefront-Key"] = storefrontKey;
   }
 
-  try {
-    const { headers } = await import("next/headers");
+  if (includeClientIp) {
+    try {
+      const { headers } = await import("next/headers");
     const h = await headers();
     const forwardedFor = h.get("x-forwarded-for");
     const realIp = h.get("x-real-ip");
@@ -45,8 +46,9 @@ async function getForwardedHeaders(): Promise<Record<string, string>> {
     if (clientIp) {
       reqHeaders["X-Client-IP"] = clientIp;
     }
-  } catch {
-    // Outside active request context (static generation, build, test runner)
+    } catch {
+      // Outside active request context (static generation, build, test runner)
+    }
   }
 
   return reqHeaders;
@@ -260,7 +262,7 @@ export function createRemoteApi(): ShopApi {
 
     async validateCart(lines: CartLine[]): Promise<ValidatedCart> {
       const url = `${baseUrl}/api/shop/cart/validate`;
-      const headers = await getForwardedHeaders();
+      const headers = await getForwardedHeaders(true);
 
       const res = await fetch(url, {
         method: "POST",
@@ -277,7 +279,7 @@ export function createRemoteApi(): ShopApi {
 
     async createOrder(input: CheckoutInput): Promise<Order> {
       const url = `${baseUrl}/api/shop/orders`;
-      const headers = await getForwardedHeaders();
+      const headers = await getForwardedHeaders(true);
 
       const res = await fetch(url, {
         method: "POST",
@@ -297,7 +299,7 @@ export function createRemoteApi(): ShopApi {
       if (!trimmedRef) return null;
 
       const url = `${baseUrl}/api/shop/orders/${encodeURIComponent(trimmedRef)}`;
-      const headers = await getForwardedHeaders();
+      const headers = await getForwardedHeaders(true);
 
       if (accessToken?.trim()) {
         headers["x-order-token"] = accessToken.trim();
@@ -318,7 +320,7 @@ export function createRemoteApi(): ShopApi {
     async resendMpesaPrompt(reference: string, accessToken: string): Promise<Order> {
       const trimmedRef = (reference || "").trim();
       const url = `${baseUrl}/api/shop/orders/${encodeURIComponent(trimmedRef)}/resend-mpesa`;
-      const headers = await getForwardedHeaders();
+      const headers = await getForwardedHeaders(true);
 
       if (accessToken?.trim()) {
         headers["x-order-token"] = accessToken.trim();
@@ -339,7 +341,7 @@ export function createRemoteApi(): ShopApi {
     ): Promise<{ authorizationUrl: string; order: Order }> {
       const trimmedRef = (reference || "").trim();
       const url = `${baseUrl}/api/shop/orders/${encodeURIComponent(trimmedRef)}/switch-to-card`;
-      const headers = await getForwardedHeaders();
+      const headers = await getForwardedHeaders(true);
 
       if (accessToken?.trim()) {
         headers["x-order-token"] = accessToken.trim();
@@ -359,7 +361,7 @@ export function createRemoteApi(): ShopApi {
 
     async subscribeNewsletter(input: NewsletterInput): Promise<FormSubmitResult> {
       const url = `${baseUrl}/api/shop/newsletter`;
-      const headers = await getForwardedHeaders();
+      const headers = await getForwardedHeaders(true);
 
       const res = await fetch(url, {
         method: "POST",
@@ -376,7 +378,7 @@ export function createRemoteApi(): ShopApi {
 
     async submitContactForm(input: ContactInput): Promise<FormSubmitResult> {
       const url = `${baseUrl}/api/shop/contact`;
-      const headers = await getForwardedHeaders();
+      const headers = await getForwardedHeaders(true);
 
       const res = await fetch(url, {
         method: "POST",
@@ -393,7 +395,7 @@ export function createRemoteApi(): ShopApi {
 
     async recordConsent(choice: ConsentChoice | ConsentRecord): Promise<void> {
       const url = `${baseUrl}/api/shop/consent`;
-      const headers = await getForwardedHeaders();
+      const headers = await getForwardedHeaders(true);
 
       await fetch(url, {
         method: "POST",
@@ -408,7 +410,7 @@ export function createRemoteApi(): ShopApi {
 
     async trackEvent(event: AnalyticsEventInput): Promise<void> {
       const url = `${baseUrl}/api/shop/analytics`;
-      const headers = await getForwardedHeaders();
+      const headers = await getForwardedHeaders(true);
 
       await fetch(url, {
         method: "POST",

@@ -1,3 +1,5 @@
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
 import { test, expect } from "@playwright/test";
 
 test.describe("Milestone B10: Storefront Revalidation & Live Backend Integration", () => {
