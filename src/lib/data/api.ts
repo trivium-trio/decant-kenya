@@ -1,4 +1,5 @@
 import { createMockApi } from "./mock";
+import { createRemoteApi } from "./remote";
 import type {
   AnalyticsEventInput,
   CartLine,
@@ -49,11 +50,20 @@ let instance: ShopApi | undefined;
 
 export function getShopApi(): ShopApi {
   if (!instance) {
-    const mode = process.env.API_MODE ?? "mock";
-    if (mode !== "mock") {
-      throw new Error(`API_MODE "${mode}" has no adapter yet. Add one in src/lib/data/ and register it here.`);
+    const provider =
+      process.env.SHOP_API_PROVIDER ??
+      process.env.API_MODE ??
+      "mock";
+
+    if (provider === "remote") {
+      instance = createRemoteApi();
+    } else if (provider === "mock") {
+      instance = createMockApi();
+    } else {
+      throw new Error(
+        `Unknown API provider "${provider}". Supported providers: "remote", "mock".`
+      );
     }
-    instance = createMockApi();
   }
   return instance;
 }

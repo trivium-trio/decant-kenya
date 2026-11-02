@@ -264,11 +264,25 @@ export function CheckoutForm() {
         setActionError(null);
         setStkModalOpen(true);
       } else {
-        // Direct advance for simulated card payment (landing on order page with pending state until settled)
         clearCart();
-        router.push(
-          `/order/${order.reference}?token=${order.accessToken}&payment=card_simulated`
-        );
+        try {
+          const cardSession = await switchOrderToCardAction(
+            order.reference,
+            order.accessToken!
+          );
+          if (
+            cardSession.authorizationUrl.startsWith("http://") ||
+            cardSession.authorizationUrl.startsWith("https://")
+          ) {
+            window.location.href = cardSession.authorizationUrl;
+          } else {
+            router.push(cardSession.authorizationUrl);
+          }
+        } catch {
+          router.push(
+            `/order/${order.reference}?token=${order.accessToken}&payment=card`
+          );
+        }
       }
     } catch (err) {
       setServerError(err instanceof Error ? err.message : "Checkout failed. Please try again.");
@@ -336,7 +350,14 @@ export function CheckoutForm() {
         currentOrder.accessToken
       );
       clearCart();
-      router.push(result.authorizationUrl);
+      if (
+        result.authorizationUrl.startsWith("http://") ||
+        result.authorizationUrl.startsWith("https://")
+      ) {
+        window.location.href = result.authorizationUrl;
+      } else {
+        router.push(result.authorizationUrl);
+      }
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Failed to switch payment method.");
       setIsActionPending(false);
