@@ -80,7 +80,7 @@ export function createRemoteApi(): ShopApi {
       if (query?.search?.trim()) params.set("search", query.search.trim());
       if (query?.sort) params.set("sort", query.sort);
       if (query?.page) params.set("page", String(query.page));
-      if (query?.pageSize) params.set("pageSize", String(query.pageSize));
+      if (query?.pageSize) params.set("pageSize", String(Math.min(query.pageSize, 1000)));
       if (query?.inStockOnly !== undefined) params.set("inStockOnly", String(query.inStockOnly));
 
       if (query?.brands && query.brands.length > 0) {
