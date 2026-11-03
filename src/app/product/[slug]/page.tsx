@@ -1,3 +1,4 @@
+export const instant = false;
 import Image from "next/image";
 import type { Metadata } from "next";
 import Link from "next/link";
