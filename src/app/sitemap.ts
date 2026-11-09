@@ -9,7 +9,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [{ items }, sets] = await Promise.all([api.listProducts({ pageSize: 1000 }), api.listSets()]);
   return [
     ...staticRoutes.map((path) => ({ url: `${siteConfig.url}${path}` })),
-    ...items.map((p) => ({ url: `${siteConfig.url}/product/${p.slug}` })),
-    ...sets.map((s) => ({ url: `${siteConfig.url}/sets/${s.slug}` })),
+    ...items
+      .filter((p) => p.slug && p.slug !== "_placeholder")
+      .map((p) => ({ url: `${siteConfig.url}/product/${p.slug}` })),
+    ...sets
+      .filter((s) => s.slug && s.slug !== "_placeholder")
+      .map((s) => ({ url: `${siteConfig.url}/sets/${s.slug}` })),
   ];
 }

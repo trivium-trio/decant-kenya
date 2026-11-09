@@ -11,11 +11,15 @@ type Props = { params: Promise<{ slug: string }> };
 
 export async function generateStaticParams() {
   const sets = await getShopApi().listSets();
+  if (sets.length === 0) {
+    return [{ slug: "_placeholder" }];
+  }
   return sets.map((s) => ({ slug: s.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
+  if (slug === "_placeholder") return {};
   const result = await getShopApi().getSet(slug);
   if (!result) return {};
   return {
@@ -27,6 +31,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function SetPage({ params }: Props) {
   const { slug } = await params;
+  if (slug === "_placeholder") notFound();
   const result = await getShopApi().getSet(slug);
   if (!result) notFound();
   const { set, products } = result;

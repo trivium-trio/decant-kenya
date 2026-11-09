@@ -15,11 +15,15 @@ type Props = { params: Promise<{ slug: string }> };
 
 export async function generateStaticParams() {
   const { items } = await getShopApi().listProducts({ pageSize: 1000 });
+  if (items.length === 0) {
+    return [{ slug: "_placeholder" }];
+  }
   return items.map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
+  if (slug === "_placeholder") return {};
   const product = await getShopApi().getProduct(slug);
   if (!product) return {};
   const canonicalUrl = `/product/${product.slug}`;
@@ -44,6 +48,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
+  if (slug === "_placeholder") notFound();
   const product = await getShopApi().getProduct(slug);
   if (!product) notFound();
 

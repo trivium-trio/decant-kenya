@@ -114,13 +114,14 @@ export function createRemoteApi(): ShopApi {
       };
 
       const requestedPageSize = query?.pageSize;
-      // Backend max allowed pageSize is 100. If 100 or fewer (or default), fetch normally.
-      if (!requestedPageSize || requestedPageSize <= 100) {
+      // Backend max allowed pageSize is 100. If not specified or <= 100, fetch normally.
+      if (typeof requestedPageSize !== "number" || requestedPageSize <= 100) {
         return fetchPage(query?.page ?? 1, requestedPageSize);
       }
 
       // If caller requested more than 100 items (e.g. 1000 for static params or sitemap),
       // fetch pages of 100 sequentially until all items are collected, with a safety cap.
+      const targetLimit: number = requestedPageSize;
       const BACKEND_MAX_PAGE_SIZE = 100;
       const MAX_SAFETY_PAGES = 50; // Safety cap (up to 5,000 items) to prevent infinite loops
 
@@ -134,7 +135,7 @@ export function createRemoteApi(): ShopApi {
       );
 
       for (let currentPage = 2; currentPage <= totalPages; currentPage++) {
-        if (allItems.length >= total || allItems.length >= requestedPageSize) {
+        if (allItems.length >= total || allItems.length >= targetLimit) {
           break;
         }
         const nextPage = await fetchPage(currentPage, BACKEND_MAX_PAGE_SIZE);
@@ -145,7 +146,7 @@ export function createRemoteApi(): ShopApi {
       }
 
       return {
-        items: allItems.slice(0, requestedPageSize),
+        items: allItems.slice(0, targetLimit),
         total,
         page: 1,
         pageSize: allItems.length,
