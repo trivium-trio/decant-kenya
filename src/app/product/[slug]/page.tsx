@@ -1,3 +1,5 @@
+export const instant = false;
+import Image from "next/image";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -13,11 +15,15 @@ type Props = { params: Promise<{ slug: string }> };
 
 export async function generateStaticParams() {
   const { items } = await getShopApi().listProducts({ pageSize: 1000 });
+  if (items.length === 0) {
+    return [{ slug: "_placeholder" }];
+  }
   return items.map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
+  if (slug === "_placeholder") return {};
   const product = await getShopApi().getProduct(slug);
   if (!product) return {};
   const canonicalUrl = `/product/${product.slug}`;
@@ -42,6 +48,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
+  if (slug === "_placeholder") notFound();
   const product = await getShopApi().getProduct(slug);
   if (!product) notFound();
 
@@ -88,10 +95,23 @@ export default async function ProductPage({ params }: Props) {
         <div className="grid gap-8 md:grid-cols-2 md:gap-12">
           {/* Image area (aspect 4/5) */}
           <div>
-            <div className="flex aspect-[4/5] w-full items-center justify-center rounded-lg border border-border bg-card/60 p-6">
-              <span className="text-xs uppercase tracking-wider text-muted-foreground">
-                [Placeholder vial image]
-              </span>
+            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-lg border border-border bg-card/60">
+              {product.images && product.images.length > 0 && product.images[0].src ? (
+                <Image
+                  src={product.images[0].src}
+                  alt={product.images[0].alt || `${product.name} 10ml decant`}
+                  fill
+                  priority
+                  sizes="(min-width: 768px) 50vw, 100vw"
+                  className="object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center p-6">
+                  <span className="text-xs uppercase tracking-wider text-muted-foreground">
+                    [Placeholder vial image]
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
