@@ -78,38 +78,78 @@ export function createRemoteApi(): ShopApi {
 
   return {
     async listProducts(query?: ProductQuery): Promise<Paginated<Product>> {
-      const params = new URLSearchParams();
-      if (query?.search?.trim()) params.set("search", query.search.trim());
-      if (query?.sort) params.set("sort", query.sort);
-      if (query?.page) params.set("page", String(query.page));
-      if (query?.pageSize) params.set("pageSize", String(Math.min(query.pageSize, 1000)));
-      if (query?.inStockOnly !== undefined) params.set("inStockOnly", String(query.inStockOnly));
+      const fetchPage = async (page: number, pageSize?: number): Promise<Paginated<Product>> => {
+        const params = new URLSearchParams();
+        if (query?.search?.trim()) params.set("search", query.search.trim());
+        if (query?.sort) params.set("sort", query.sort);
+        if (page) params.set("page", String(page));
+        if (pageSize) params.set("pageSize", String(pageSize));
+        if (query?.inStockOnly !== undefined) params.set("inStockOnly", String(query.inStockOnly));
 
-      if (query?.brands && query.brands.length > 0) {
-        for (const brand of query.brands) {
-          params.append("brands", brand);
+        if (query?.brands && query.brands.length > 0) {
+          for (const brand of query.brands) {
+            params.append("brands", brand);
+          }
         }
+
+        if (query?.families && query.families.length > 0) {
+          for (const family of query.families) {
+            params.append("families", family);
+          }
+        }
+
+        const queryString = params.toString();
+        const url = `${baseUrl}/api/shop/products${queryString ? `?${queryString}` : ""}`;
+        const headers = await getForwardedHeaders();
+
+        const res = await fetch(url, {
+          headers,
+          next: {
+            tags: ["catalogue"],
+            revalidate: 3600,
+          },
+        });
+
+        return handleResponse<Paginated<Product>>(res, "Failed to retrieve products from backend.");
+      };
+
+      const requestedPageSize = query?.pageSize;
+      // Backend max allowed pageSize is 100. If 100 or fewer (or default), fetch normally.
+      if (!requestedPageSize || requestedPageSize <= 100) {
+        return fetchPage(query?.page ?? 1, requestedPageSize);
       }
 
-      if (query?.families && query.families.length > 0) {
-        for (const family of query.families) {
-          params.append("families", family);
+      // If caller requested more than 100 items (e.g. 1000 for static params or sitemap),
+      // fetch pages of 100 sequentially until all items are collected, with a safety cap.
+      const BACKEND_MAX_PAGE_SIZE = 100;
+      const MAX_SAFETY_PAGES = 50; // Safety cap (up to 5,000 items) to prevent infinite loops
+
+      const firstPage = await fetchPage(1, BACKEND_MAX_PAGE_SIZE);
+      const allItems: Product[] = [...firstPage.items];
+      const total = firstPage.total;
+
+      const totalPages = Math.min(
+        Math.ceil(total / BACKEND_MAX_PAGE_SIZE),
+        MAX_SAFETY_PAGES
+      );
+
+      for (let currentPage = 2; currentPage <= totalPages; currentPage++) {
+        if (allItems.length >= total || allItems.length >= requestedPageSize) {
+          break;
         }
+        const nextPage = await fetchPage(currentPage, BACKEND_MAX_PAGE_SIZE);
+        if (!nextPage.items || nextPage.items.length === 0) {
+          break;
+        }
+        allItems.push(...nextPage.items);
       }
 
-      const queryString = params.toString();
-      const url = `${baseUrl}/api/shop/products${queryString ? `?${queryString}` : ""}`;
-      const headers = await getForwardedHeaders();
-
-      const res = await fetch(url, {
-        headers,
-        next: {
-          tags: ["catalogue"],
-          revalidate: 3600,
-        },
-      });
-
-      return handleResponse<Paginated<Product>>(res, "Failed to retrieve products from backend.");
+      return {
+        items: allItems.slice(0, requestedPageSize),
+        total,
+        page: 1,
+        pageSize: allItems.length,
+      };
     },
 
     async listFacets(): Promise<{ brands: string[]; families: string[] }> {
