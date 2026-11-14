@@ -7,6 +7,7 @@ import { siteConfig } from "@/config/site";
 import { Price } from "@/components/shared/price";
 import { AddToCartButton } from "@/components/product/add-to-cart-button";
 import { ProductCard } from "@/components/product/product-card";
+import { ScentVideo } from "@/components/product/scent-video";
 import { TrackProductView } from "@/components/product/track-product-view";
 import { getShopApi } from "@/lib/data/api";
 import { breadcrumbJsonLd, JsonLd, productJsonLd } from "@/lib/seo/json-ld";
@@ -168,6 +169,17 @@ export default async function ProductPage({ params }: Props) {
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{product.description}</p>
             </section>
+
+            {/* Scent review video */}
+            {product.videoUrl && (
+              <div className="border-t border-border pt-6">
+                <ScentVideo
+                  videoUrl={product.videoUrl}
+                  poster={product.videoPoster}
+                  productName={product.name}
+                />
+              </div>
+            )}
 
             {/* Reviews (FR-18) */}
             <section aria-label="Customer reviews" className="mt-8 border-t border-border pt-6">

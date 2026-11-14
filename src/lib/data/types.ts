@@ -33,6 +33,10 @@ export interface Product {
   price: Money;
   stock: StockStatus;
   rating?: { average: number; count: number };
+  /** URL to a scent review video (e.g. YouTube embed or direct mp4). */
+  videoUrl?: string;
+  /** Poster/thumbnail image for the review video. */
+  videoPoster?: string;
 }
 
 export interface DiscoverySet {

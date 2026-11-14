@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Play } from "lucide-react";
 import { Price } from "@/components/shared/price";
 import { AddToCartButton } from "@/components/product/add-to-cart-button";
 import type { Product } from "@/lib/data/types";
@@ -31,6 +32,12 @@ export function ProductCard({ product }: { product: Product }) {
         </div>
         <p className="text-xs text-muted-foreground">{product.brand}</p>
         <h3 className="line-clamp-2 text-base font-medium">{product.name}</h3>
+        {product.videoUrl && (
+          <span className="inline-flex items-center gap-1 text-xs text-primary">
+            <Play className="size-3" aria-hidden="true" />
+            Watch the review
+          </span>
+        )}
       </Link>
       <div className="flex flex-col gap-2">
         <p className="text-xs uppercase tracking-wider text-muted-foreground">10ml decant</p>
