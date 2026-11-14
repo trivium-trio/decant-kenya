@@ -32,8 +32,6 @@ export interface Product {
   /** Price of the 10ml decant. */
   price: Money;
   stock: StockStatus;
-  /** Later phase (FR-20): the full-bottle product to link to. */
-  fullBottleSlug?: string;
   rating?: { average: number; count: number };
 }
 

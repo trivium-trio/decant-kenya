@@ -1,21 +1,49 @@
-const steps = [
-  { title: "Try", text: "Pick a decant or a discovery set." },
-  { title: "Love", text: "Wear it for a week and see how it settles." },
-  { title: "Own", text: "Get the full bottle when you're sure." },
+import { Droplets, Sparkles, Layers, PackageCheck } from "lucide-react";
+
+const reasons = [
+  {
+    icon: Sparkles,
+    title: "Premium juice",
+    text: "Every drop is drawn from brand-new, authenticated bottles with verified batch codes.",
+  },
+  {
+    icon: Droplets,
+    title: "Low commitment",
+    text: "A 10ml vial gives you 120–150 sprays — enough for a full month — without the full-bottle price.",
+  },
+  {
+    icon: Layers,
+    title: "Variety",
+    text: "Explore different houses and scent families without committing to one bottle.",
+  },
+  {
+    icon: PackageCheck,
+    title: "Convenience",
+    text: "Pocket-sized, leak-proof atomizers delivered to your door across Kenya.",
+  },
 ];
 
 export function HowItWorks() {
   return (
-    <section className="bg-card">
-      <ol className="mx-auto grid max-w-6xl gap-6 px-5 py-10 md:grid-cols-3 md:gap-8 md:px-8 md:py-12">
-        {steps.map((step, i) => (
-          <li key={step.title} className="flex flex-col gap-2">
-            <span className="text-xs uppercase tracking-widest text-muted-foreground">Step {i + 1}</span>
-            <h2 className="text-2xl font-medium">{step.title}</h2>
-            <p className="text-sm">{step.text}</p>
-          </li>
-        ))}
-      </ol>
+    <section className="bg-card" aria-labelledby="why-decants-heading">
+      <div className="mx-auto max-w-6xl px-5 py-10 md:px-8 md:py-12">
+        <h2 id="why-decants-heading" className="text-2xl font-medium tracking-tight">
+          Why decants?
+        </h2>
+        <ul className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {reasons.map((r) => (
+            <li key={r.title} className="flex gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <r.icon className="size-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-medium">{r.title}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{r.text}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   );
 }

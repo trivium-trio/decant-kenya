@@ -4,7 +4,7 @@ import { getShopApi } from "@/lib/data/api";
 
 export const metadata: Metadata = {
   title: "Discovery sets",
-  description: "Curated 3-fragrance discovery sets in authentic 10ml vials. Try first, love it, own it.",
+  description: "Curated 3-fragrance discovery sets in authentic 10ml vials. Delivered across Kenya.",
   alternates: { canonical: "/sets" },
 };
 

@@ -22,7 +22,7 @@ export default function ShopPage({
       <header className="mb-8">
         <h1 className="text-3xl font-medium tracking-tight md:text-4xl">Shop</h1>
         <p className="mt-2 text-base text-muted-foreground md:text-lg">
-          Browse our curated collection of authentic 10ml fragrance decants. Try first, love it, own it.
+          Browse our curated collection of authentic 10ml fragrance decants.
         </p>
       </header>
 

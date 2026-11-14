@@ -169,8 +169,6 @@ export default async function ProductPage({ params }: Props) {
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{product.description}</p>
             </section>
 
-            {/* TODO: full-bottle prompt (FR-20, later phase) */}
-
             {/* Reviews (FR-18) */}
             <section aria-label="Customer reviews" className="mt-8 border-t border-border pt-6">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">

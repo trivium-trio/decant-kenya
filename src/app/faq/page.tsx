@@ -63,7 +63,7 @@ const faqItems = [
     id: "bottles",
     question: "Do you sell full bottles?",
     answer:
-      "We currently focus solely on 10ml decants and 3-piece discovery sets under our 'Try it first, Love it, Own it' philosophy. Full bottle purchasing options will be made available in a future phase.",
+      "We currently focus exclusively on 10ml decants and 3-piece discovery sets. Full bottle purchasing options may be made available in a future phase.",
   },
 ];
 

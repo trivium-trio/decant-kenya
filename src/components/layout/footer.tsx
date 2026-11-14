@@ -14,7 +14,7 @@ export function Footer() {
               {siteConfig.name}
             </span>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              Authentic 10ml fragrance decants and discovery sets, hand-decanted and delivered nationwide across Kenya. Try it first, love it, own it.
+              Authentic 10ml fragrance decants and discovery sets, hand-decanted and delivered across Kenya.
             </p>
           </div>
 

@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Sparkles, Heart, CheckCircle2, ShieldCheck, Droplets, Pipette } from "lucide-react";
+import { Sparkles, ShieldCheck, Droplets, Pipette, ShoppingBag, Package, Truck } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "How It Works",
-  description: "Experience luxury fragrance through authentic 10ml decants. Try it first, love it, own it across Kenya.",
+  description: "How to buy authentic 10ml fragrance decants: browse, order, and get them delivered across Kenya.",
   alternates: {
     canonical: "/how-it-works",
   },
@@ -27,57 +27,57 @@ export default function HowItWorksPage() {
         </p>
       </section>
 
-      {/* The 3-Step Journey */}
+      {/* The Decant Buying Journey */}
       <section className="mt-12" aria-labelledby="journey-heading">
         <h2 id="journey-heading" className="text-xl font-medium tracking-tight text-foreground sm:text-2xl">
-          The Three-Step Model
+          Your Decant Journey
         </h2>
         <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
           {/* Step 1 */}
           <div className="flex flex-col rounded-xl border border-border bg-card p-6">
             <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Droplets className="size-5" />
+              <ShoppingBag className="size-5" />
             </div>
             <span className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Step 01
             </span>
             <h3 className="mt-1 text-lg font-medium text-foreground">
-              Try it first
+              Browse & pick
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              Select any 10ml decant or curate a 3-piece discovery set. A 10ml vial gives you 120–150 fine sprays—plenty for a full month of daily application.
+              Explore our curated collection of 10ml decants or choose a 3-piece discovery set. Watch our scent review videos to find your match.
             </p>
           </div>
 
           {/* Step 2 */}
           <div className="flex flex-col rounded-xl border border-border bg-card p-6">
             <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Heart className="size-5" />
+              <Package className="size-5" />
             </div>
             <span className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Step 02
             </span>
             <h3 className="mt-1 text-lg font-medium text-foreground">
-              Love it
+              Order & pay
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              Paper test strips in stores lie. Wear the scent in real Kenya weather, during work meetings, and on evenings out to see how the dry-down performs on your unique skin chemistry.
+              Check out with M-Pesa STK Push or card. Your order is confirmed in seconds and your decants are packed immediately.
             </p>
           </div>
 
           {/* Step 3 */}
           <div className="flex flex-col rounded-xl border border-border bg-card p-6">
             <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <CheckCircle2 className="size-5" />
+              <Truck className="size-5" />
             </div>
             <span className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Step 03
             </span>
             <h3 className="mt-1 text-lg font-medium text-foreground">
-              Own it
+              Receive & wear
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              Once you find a perfume that commands compliments and feels like your personal signature, invest in a full retail bottle with total peace of mind.
+              Your decants arrive in leak-proof packaging within 48 hours. Each 10ml vial gives you 120–150 fine sprays — enough for a full month of daily wear.
             </p>
           </div>
         </div>
@@ -115,6 +115,23 @@ export default function HowItWorksPage() {
                 We use sterile single-use laboratory pipettes inside a clean, temperature-controlled environment to prevent cross-contamination and preserve original note integrity.
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Hygiene Note */}
+      <section className="mt-8 rounded-xl border border-border bg-card/60 p-6 md:p-8" aria-labelledby="hygiene-heading">
+        <div className="flex gap-4">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
+            <Droplets className="size-5" />
+          </div>
+          <div>
+            <h3 id="hygiene-heading" className="text-base font-medium text-foreground">
+              Hygiene & Storage
+            </h3>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              Because decants are cosmetic personal-care products, opened or unsealed vials cannot be returned or exchanged. Store your decants upright in a cool, dark place away from direct sunlight. Proper storage keeps the notes true for up to 2 years.
+            </p>
           </div>
         </div>
       </section>
