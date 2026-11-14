@@ -17,6 +17,8 @@ const SORT_OPTIONS: { id: SortOption; label: string }[] = [
   { id: "name", label: "Name" },
 ];
 
+const SKELETON_FILTERS_ENABLED = process.env.NEXT_PUBLIC_ENABLE_SHOP_FILTERS === "true";
+
 export function ShopResultsSkeleton() {
   return (
     <div className="space-y-6">
@@ -25,19 +27,23 @@ export function ShopResultsSkeleton() {
 
       <div className="flex flex-col gap-6 md:flex-row md:gap-8">
         {/* Desktop sidebar skeleton */}
-        <div className="hidden md:block w-60 shrink-0 space-y-4">
-          <Skeleton className="h-6 w-24" />
-          <Skeleton className="h-40 w-full rounded-lg" />
-          <Skeleton className="h-40 w-full rounded-lg" />
-        </div>
+        {SKELETON_FILTERS_ENABLED && (
+          <div className="hidden md:block w-60 shrink-0 space-y-4">
+            <Skeleton className="h-6 w-24" />
+            <Skeleton className="h-40 w-full rounded-lg" />
+            <Skeleton className="h-40 w-full rounded-lg" />
+          </div>
+        )}
 
         {/* Main column skeleton */}
         <div className="flex-1 space-y-6">
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-            {SORT_OPTIONS.map((opt) => (
-              <Skeleton key={opt.id} className="min-h-11 w-full rounded-md sm:w-36" />
-            ))}
-          </div>
+          {SKELETON_FILTERS_ENABLED && (
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+              {SORT_OPTIONS.map((opt) => (
+                <Skeleton key={opt.id} className="min-h-11 w-full rounded-md sm:w-36" />
+              ))}
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6 lg:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -55,6 +61,8 @@ export function ShopResultsSkeleton() {
   );
 }
 
+const FILTERS_ENABLED = process.env.NEXT_PUBLIC_ENABLE_SHOP_FILTERS === "true";
+
 export async function ShopResults({
   searchParams,
 }: {
@@ -65,7 +73,7 @@ export async function ShopResults({
 
   const api = getShopApi();
   const [facets, { items, total, page, pageSize }] = await Promise.all([
-    api.listFacets(),
+    FILTERS_ENABLED ? api.listFacets() : Promise.resolve({ brands: [], families: [] }),
     api.listProducts({
       search: state.q,
       brands: state.brands.length > 0 ? state.brands : undefined,
@@ -107,32 +115,34 @@ export async function ShopResults({
 
         {/* Layout: Sticky sidebar (md+) or bottom Sheet (<md) beside grid */}
         <div className="flex flex-col gap-6 md:flex-row md:gap-8">
-          <ShopFilters facets={facets} state={state} />
+          {FILTERS_ENABLED && <ShopFilters facets={facets} state={state} />}
 
           <div className="flex-1 min-w-0 space-y-6">
-            {/* Sorting nav (FR-13) */}
-            <nav aria-label="Sort" className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-              {SORT_OPTIONS.map((opt) => {
-                const isActive = state.sort === opt.id;
-                return (
-                  <Link
-                    key={opt.id}
-                    href={buildShopUrl(state, { sort: opt.id })}
-                    aria-current={isActive ? "true" : undefined}
-                    className={`inline-flex min-h-11 items-center justify-center rounded-md border px-4 py-2 text-center text-xs font-medium transition sm:text-sm ${
-                      isActive
-                        ? "border-foreground bg-card text-foreground shadow-sm"
-                        : "border-border bg-card/40 text-muted-foreground hover:bg-card hover:text-foreground"
-                    }`}
-                  >
-                    {opt.label}
-                  </Link>
-                );
-              })}
-            </nav>
+            {/* Sorting nav (FR-13) — hidden until filters are enabled */}
+            {FILTERS_ENABLED && (
+              <nav aria-label="Sort" className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+                {SORT_OPTIONS.map((opt) => {
+                  const isActive = state.sort === opt.id;
+                  return (
+                    <Link
+                      key={opt.id}
+                      href={buildShopUrl(state, { sort: opt.id })}
+                      aria-current={isActive ? "true" : undefined}
+                      className={`inline-flex min-h-11 items-center justify-center rounded-md border px-4 py-2 text-center text-xs font-medium transition sm:text-sm ${
+                        isActive
+                          ? "border-foreground bg-card text-foreground shadow-sm"
+                          : "border-border bg-card/40 text-muted-foreground hover:bg-card hover:text-foreground"
+                      }`}
+                    >
+                      {opt.label}
+                    </Link>
+                  );
+                })}
+              </nav>
+            )}
 
             {/* Active filters chips (Item 13) */}
-            {hasActiveFilters && (
+            {FILTERS_ENABLED && hasActiveFilters && (
               <div className="flex flex-wrap items-center gap-2" aria-label="Active filters">
                 {state.brands.map((brand) => (
                   <Link
