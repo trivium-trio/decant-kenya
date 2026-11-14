@@ -26,7 +26,12 @@ export function ProductCard({ product }: { product: Product }) {
           )}
           {product.stock === "low_stock" && (
             <span className="absolute left-2 top-2 z-10 rounded border border-border bg-card/90 px-2 py-0.5 text-xs font-medium text-foreground">
-              Few left
+              Last few left
+            </span>
+          )}
+          {product.backInStock && product.stock !== "out_of_stock" && product.stock !== "low_stock" && (
+            <span className="absolute left-2 top-2 z-10 rounded border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+              Back in stock
             </span>
           )}
         </div>

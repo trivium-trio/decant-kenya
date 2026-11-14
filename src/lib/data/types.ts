@@ -37,6 +37,10 @@ export interface Product {
   videoUrl?: string;
   /** Poster/thumbnail image for the review video. */
   videoPoster?: string;
+  /** ISO date when this product was added to the catalogue. */
+  createdAt?: string;
+  /** True when the product recently returned to stock after being out_of_stock. */
+  backInStock?: boolean;
 }
 
 export interface DiscoverySet {

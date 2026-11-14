@@ -29,6 +29,8 @@ export interface ShopApi {
   getProduct(slug: string): Promise<Product | null>;
   /** In-stock products only (FR-8). */
   getBestSellers(limit?: number): Promise<Product[]>;
+  /** Most recently added in-stock products. */
+  getNewArrivals(limit?: number): Promise<Product[]>;
   listRelatedProducts(productId: string, limit?: number): Promise<Product[]>;
   suggestProducts(query: string, limit?: number): Promise<SearchSuggestion[]>;
   listSets(): Promise<DiscoverySet[]>;

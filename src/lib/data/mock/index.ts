@@ -115,6 +115,18 @@ export function createMockApi(): ShopApi {
       return products.filter((p) => p.stock !== "out_of_stock").slice(0, limit);
     },
 
+    async getNewArrivals(limit = 4) {
+      return [...products]
+        .filter((p) => p.stock !== "out_of_stock")
+        .sort((a, b) => {
+          if (a.createdAt && b.createdAt) return b.createdAt.localeCompare(a.createdAt);
+          if (a.createdAt) return -1;
+          if (b.createdAt) return 1;
+          return 0;
+        })
+        .slice(0, limit);
+    },
+
     async listRelatedProducts(productId: string, limit = 4): Promise<Product[]> {
       const current = products.find((p) => p.id === productId);
       if (!current) return [];

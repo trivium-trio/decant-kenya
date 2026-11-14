@@ -208,6 +208,27 @@ export function createRemoteApi(): ShopApi {
       return handleResponse<Product[]>(res, "Failed to retrieve best sellers.");
     },
 
+    async getNewArrivals(limit = 4): Promise<Product[]> {
+      const url = `${baseUrl}/api/shop/new-arrivals?limit=${encodeURIComponent(limit)}`;
+      const headers = await getForwardedHeaders();
+
+      const res = await fetch(url, {
+        headers,
+        next: {
+          tags: ["catalogue"],
+          revalidate: 3600,
+        },
+      });
+
+      if (!res.ok) {
+        // Graceful fallback: if the backend doesn't support this endpoint yet, return empty
+        if (res.status === 404) return [];
+        return handleResponse<Product[]>(res, "Failed to retrieve new arrivals.");
+      }
+
+      return handleResponse<Product[]>(res, "Failed to retrieve new arrivals.");
+    },
+
     async listRelatedProducts(productIdOrSlug: string, limit = 4): Promise<Product[]> {
       const trimmed = (productIdOrSlug || "").trim();
       if (!trimmed) return [];
