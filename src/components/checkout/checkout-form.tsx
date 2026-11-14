@@ -762,7 +762,7 @@ export function CheckoutForm() {
                   <Price money={subtotalMoney} className="text-foreground" />
                 </div>
                 <div className="flex justify-between text-muted-foreground">
-                  <span>Standard Delivery (Kenya)</span>
+                  <span>Delivery (within 48 hours)</span>
                   <Price money={deliveryMoney} className="text-foreground" />
                 </div>
                 <div className="flex justify-between border-t border-border pt-3 text-base font-semibold text-foreground">

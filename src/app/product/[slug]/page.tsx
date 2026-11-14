@@ -128,9 +128,16 @@ export default async function ProductPage({ params }: Props) {
             {/* Stock status text */}
             <p className="mt-3 text-sm font-medium">
               {product.stock === "out_of_stock" && <span className="text-destructive">Sold out</span>}
-              {product.stock === "low_stock" && <span className="text-foreground">Few left</span>}
+              {product.stock === "low_stock" && <span className="text-foreground">Last few left</span>}
               {product.stock === "in_stock" && <span className="text-muted-foreground">In stock</span>}
             </p>
+
+            {/* Delivery promise */}
+            {product.stock !== "out_of_stock" && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Delivered within 48 hours · Pay with M-Pesa
+              </p>
+            )}
 
             {/* Desktop Add to cart button (hidden below md) */}
             <div className="mt-6 hidden md:block">
