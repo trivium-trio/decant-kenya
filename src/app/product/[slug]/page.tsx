@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { siteConfig } from "@/config/site";
+import { ShieldCheck, Camera, ExternalLink } from "lucide-react";
 import { Price } from "@/components/shared/price";
 import { AddToCartButton } from "@/components/product/add-to-cart-button";
 import { ProductCard } from "@/components/product/product-card";
@@ -122,7 +123,7 @@ export default async function ProductPage({ params }: Props) {
             <h1 className="mt-1 text-3xl font-medium tracking-tight md:text-4xl">{product.name}</h1>
             <p className="mt-2 text-xs uppercase tracking-wider text-muted-foreground">10ml decant</p>
             <Price money={product.price} className="mt-3 block text-2xl font-medium" />
-            <p className="mt-1 text-xs text-muted-foreground">[Authenticity line]</p>
+            <p className="mt-1 text-xs text-muted-foreground">100% authentic — verified batch codes</p>
 
             {/* Stock status text */}
             <p className="mt-3 text-sm font-medium">
@@ -168,6 +169,38 @@ export default async function ProductPage({ params }: Props) {
                 Description
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{product.description}</p>
+            </section>
+
+            {/* Trust & authenticity block */}
+            <section aria-label="Authenticity guarantee" className="mt-6 rounded-lg border border-border bg-card/60 p-4">
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <ShieldCheck className="size-4 shrink-0 text-primary mt-0.5" aria-hidden="true" />
+                  <div className="text-sm">
+                    <span className="font-medium text-foreground">Batch code verified</span>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Every decant is drawn from a verified manufacturer bottle. Batch code photo available on request.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Camera className="size-4 shrink-0 text-primary mt-0.5" aria-hidden="true" />
+                  <div className="text-sm">
+                    <span className="font-medium text-foreground">Unboxing proof</span>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      We photograph the sealed source bottle before every decanting session.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <ExternalLink className="size-4 shrink-0 text-primary mt-0.5" aria-hidden="true" />
+                  <div className="text-sm">
+                    <Link href="/authenticity" className="font-medium text-primary hover:underline">
+                      Authenticity guarantee &rarr;
+                    </Link>
+                  </div>
+                </div>
+              </div>
             </section>
 
             {/* Scent review video */}

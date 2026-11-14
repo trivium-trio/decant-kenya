@@ -9,6 +9,7 @@ export const siteConfig = {
     { label: "Contact", href: "/contact" },
   ],
   footer: [
+    { label: "Authenticity guarantee", href: "/authenticity" },
     { label: "Shipping and returns", href: "/shipping-returns" },
     { label: "FAQ", href: "/faq" },
     { label: "Contact", href: "/contact" },

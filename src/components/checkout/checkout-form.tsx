@@ -790,9 +790,16 @@ export function CheckoutForm() {
                 )}
               </button>
 
-              <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5">
-                <ShieldCheck className="h-4 w-4 text-primary" aria-hidden="true" />
-                <span>100% Authentic decants guaranteed</span>
+              <p className="text-center text-xs text-muted-foreground flex flex-col items-center gap-1.5">
+                <span className="flex items-center gap-1.5">
+                  <ShieldCheck className="h-4 w-4 text-primary" aria-hidden="true" />
+                  <span>100% Authentic decants guaranteed</span>
+                </span>
+                <span className="flex items-center gap-3">
+                  <Link href="/authenticity" className="text-primary hover:underline">Authenticity guarantee</Link>
+                  <span aria-hidden="true">·</span>
+                  <Link href="/shipping-returns" className="text-primary hover:underline">Returns policy</Link>
+                </span>
               </p>
             </div>
           </div>
